@@ -1,3 +1,4 @@
+import { useRef, useState } from 'react'
 import landingBg from '../assets/landing-bg.png'
 
 type LandingProps = {
@@ -5,6 +6,126 @@ type LandingProps = {
 }
 
 function Landing({ onEnter }: LandingProps) {
+
+  const sliderRef = useRef<HTMLDivElement>(null)
+  const knobRef = useRef<HTMLDivElement>(null)
+
+  const [dragX, setDragX] = useState(0)
+  const [dragging, setDragging] = useState(false)
+
+  const TRACK_PADDING = 4
+
+  // ------------------------------------------------------------
+  // 取得 Slider 最大可移動距離
+  // ------------------------------------------------------------
+  const getMaxDrag = () => {
+
+    if (
+      !sliderRef.current ||
+      !knobRef.current
+    ) {
+      return 0
+    }
+
+    const trackWidth =
+      sliderRef.current.clientWidth
+
+    const knobWidth =
+      knobRef.current.clientWidth
+
+    return (
+      trackWidth -
+      knobWidth -
+      TRACK_PADDING * 2
+    )
+  }
+
+  // ------------------------------------------------------------
+  // 開始拖曳
+  // ------------------------------------------------------------
+  const handlePointerDown = (
+    event: React.PointerEvent<HTMLDivElement>
+  ) => {
+
+    setDragging(true)
+
+    event.currentTarget.setPointerCapture(
+      event.pointerId
+    )
+  }
+
+  // ------------------------------------------------------------
+  // 拖曳中
+  // ------------------------------------------------------------
+  const handlePointerMove = (
+    event: React.PointerEvent<HTMLDivElement>
+  ) => {
+
+    if (
+      !dragging ||
+      !sliderRef.current ||
+      !knobRef.current
+    ) {
+      return
+    }
+
+    const rect =
+      sliderRef.current.getBoundingClientRect()
+
+    const knobWidth =
+      knobRef.current.clientWidth
+
+    const maxDrag =
+      getMaxDrag()
+
+    let newX =
+      event.clientX -
+      rect.left -
+      TRACK_PADDING -
+      knobWidth / 2
+
+    // 限制拖曳範圍
+    newX = Math.max(
+      0,
+      Math.min(newX, maxDrag)
+    )
+
+    setDragX(newX)
+  }
+
+  // ------------------------------------------------------------
+  // 放開 Slider
+  // ------------------------------------------------------------
+  const handlePointerUp = () => {
+
+    if (!dragging) {
+      return
+    }
+
+    setDragging(false)
+
+    const maxDrag =
+      getMaxDrag()
+
+    // 滑超過 88% 才進入
+    if (
+      maxDrag > 0 &&
+      dragX >= maxDrag * 0.88
+    ) {
+
+      setDragX(maxDrag)
+
+      setTimeout(() => {
+        onEnter()
+      }, 180)
+
+      return
+    }
+
+    // 沒滑到底，自動回原位
+    setDragX(0)
+  }
+
   return (
     <div className="min-h-screen bg-slate-950">
 
@@ -26,243 +147,190 @@ function Landing({ onEnter }: LandingProps) {
         }}
       >
 
-        {/* 背景深色遮罩，增加文字可讀性 */}
-        <div className="absolute inset-0 bg-slate-950/35" />
+        {/* Background Gradient */}
+        <div
+          className="
+            absolute
+            inset-0
+            bg-gradient-to-b
+            from-slate-950/10
+            via-slate-950/20
+            to-slate-950/90
+          "
+        />
 
-        {/* 背景光暈 */}
-        <div className="absolute -left-32 top-20 h-80 w-80 rounded-full bg-cyan-500/20 blur-3xl" />
-        <div className="absolute -right-24 bottom-20 h-96 w-96 rounded-full bg-indigo-500/20 blur-3xl" />
+        {/* Cold Tone */}
+        <div
+          className="
+            absolute
+            inset-0
+            bg-blue-950/10
+          "
+        />
 
-        {/* 背景裝飾 */}
-        <div className="absolute inset-0 opacity-20">
-
-          <div className="absolute left-[12%] top-[18%] text-5xl">
-            ❄
-          </div>
-
-          <div className="absolute right-[15%] top-[28%] text-3xl">
-            ❄
-          </div>
-
-          <div className="absolute bottom-[22%] left-[20%] text-2xl">
-            ❄
-          </div>
-
-        </div>
-
-        {/* Main Content */}
+        {/* Content */}
         <div
           className="
             relative
             z-10
             flex
+            min-h-screen
             w-full
             flex-col
-            px-6
+            px-7
             pb-10
-            pt-16
+            pt-12
           "
         >
 
-          {/* Logo */}
-          <div className="flex items-center gap-3">
+          {/* Brand */}
+          <div>
 
-            <div
+            <p
               className="
-                flex h-12 w-12
-                items-center justify-center
-                rounded-2xl
-                border border-white/10
-                bg-white/10
-                text-2xl
-                shadow-lg
-                backdrop-blur-md
+                text-[11px]
+                font-medium
+                tracking-[0.32em]
+                text-white/70
               "
             >
-              ✈️
-            </div>
-
-            <div>
-
-              <p className="text-xs tracking-[0.25em] text-slate-300">
-                MY TRAVEL
-              </p>
-
-              <h2 className="font-semibold text-white">
-                Travel Memories
-              </h2>
-
-            </div>
+              TRAVEL MEMORIES
+            </p>
 
           </div>
 
-          {/* Main */}
-          <div className="my-auto py-16">
-
-            <p className="mb-3 text-sm font-medium text-cyan-300">
-              EXPLORE · RECORD · REMEMBER
-            </p>
+          {/* Main Text */}
+          <div className="mt-auto pb-10">
 
             <h1
               className="
-                text-5xl
-                font-bold
+                max-w-xs
+                text-[48px]
+                font-semibold
                 leading-[1.08]
-                tracking-tight
+                tracking-[-0.04em]
                 text-white
-                drop-shadow-lg
+                drop-shadow-xl
               "
             >
-              把每一趟旅行
+              把旅行
               <br />
-              留在地圖上
+              留在路上
             </h1>
 
             <p
               className="
-                mt-6
-                max-w-xs
-                text-base
+                mt-5
+                max-w-[280px]
+                text-[15px]
                 leading-7
-                text-slate-200
-                drop-shadow
+                text-white/70
               "
             >
-              行程、足跡、照片、任務與滑雪紀錄，
-              全部收進自己的旅行世界。
+              記錄每一次出發，
+              <br />
+              以及真正走過的地方。
             </p>
-
-            {/* Feature Preview */}
-            <div className="mt-10 grid grid-cols-3 gap-3">
-
-              <div
-                className="
-                  rounded-2xl
-                  border border-white/10
-                  bg-slate-950/30
-                  p-4
-                  shadow-lg
-                  backdrop-blur-md
-                "
-              >
-
-                <div className="text-2xl">
-                  🗺️
-                </div>
-
-                <p className="mt-3 text-xs text-slate-300">
-                  GPS
-                </p>
-
-                <p className="text-sm font-semibold">
-                  足跡
-                </p>
-
-              </div>
-
-              <div
-                className="
-                  rounded-2xl
-                  border border-white/10
-                  bg-slate-950/30
-                  p-4
-                  shadow-lg
-                  backdrop-blur-md
-                "
-              >
-
-                <div className="text-2xl">
-                  📷
-                </div>
-
-                <p className="mt-3 text-xs text-slate-300">
-                  PHOTO
-                </p>
-
-                <p className="text-sm font-semibold">
-                  回憶
-                </p>
-
-              </div>
-
-              <div
-                className="
-                  rounded-2xl
-                  border border-white/10
-                  bg-slate-950/30
-                  p-4
-                  shadow-lg
-                  backdrop-blur-md
-                "
-              >
-
-                <div className="text-2xl">
-                  ⛷️
-                </div>
-
-                <p className="mt-3 text-xs text-slate-300">
-                  SKI
-                </p>
-
-                <p className="text-sm font-semibold">
-                  紀錄
-                </p>
-
-              </div>
-
-            </div>
 
           </div>
 
-          {/* Enter Button */}
-          <button
-            onClick={onEnter}
+          {/* Slide To Enter */}
+          <div
+            ref={sliderRef}
             className="
-              group
-              flex w-full
-              items-center
-              justify-between
-              rounded-3xl
-              bg-white
-              px-6
-              py-5
-              text-left
-              text-slate-950
+              relative
+              h-[60px]
+              w-full
+              touch-none
+              select-none
+              overflow-hidden
+              rounded-[30px]
+              border
+              border-white/20
+              bg-white/15
+              p-1
               shadow-2xl
               shadow-black/30
-              transition
-              active:scale-[0.98]
+              backdrop-blur-md
             "
           >
 
-            <div>
-
-              <p className="text-xs text-slate-500">
-                MY TRAVEL WORLD
-              </p>
-
-              <p className="mt-1 text-lg font-bold">
-                進入旅行世界
-              </p>
-
-            </div>
-
+            {/* Slide Text */}
             <div
               className="
-                flex h-11 w-11
-                items-center justify-center
-                rounded-full
-                bg-slate-950
-                text-xl
-                text-white
-                transition
-                group-hover:translate-x-1
+                pointer-events-none
+                absolute
+                inset-0
+                flex
+                items-center
+                justify-center
+                text-[15px]
+                font-medium
+                tracking-[0.04em]
+                text-white/75
               "
             >
-              →
+              滑動開始旅程
             </div>
 
-          </button>
+            {/* Slider */}
+            <div
+              ref={knobRef}
+
+              onPointerDown={
+                handlePointerDown
+              }
+
+              onPointerMove={
+                handlePointerMove
+              }
+
+              onPointerUp={
+                handlePointerUp
+              }
+
+              onPointerCancel={
+                handlePointerUp
+              }
+
+              className="
+                absolute
+                left-1
+                top-1
+                z-10
+
+                h-[52px]
+                w-[25%]
+
+                cursor-grab
+
+                rounded-[26px]
+
+                border
+                border-white/80
+
+                bg-white/95
+
+                shadow-lg
+                shadow-black/15
+
+                backdrop-blur-md
+
+                active:cursor-grabbing
+              "
+
+              style={{
+                transform:
+                  `translateX(${dragX}px)`,
+
+                transition:
+                  dragging
+                    ? 'none'
+                    : 'transform 320ms cubic-bezier(0.22, 1, 0.36, 1)',
+              }}
+            />
+
+          </div>
 
         </div>
 
