@@ -1,3 +1,5 @@
+import ClockWidget from '../components/ClockWidget'
+
 type LauncherProps = {
   onOpenHokkaido: () => void
 }
@@ -18,15 +20,13 @@ function Launcher({
         {/* Top */}
         <div className="flex items-start justify-between">
 
-          <div>
-            <p className="text-sm font-medium text-slate-500">
-              Good Morning
-            </p>
+            <div>
+            <ClockWidget />
 
-            <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-900">
-              My Travel
-            </h1>
-          </div>
+            <h2 className="mt-3 text-xl font-bold text-slate-900">
+                My Travel
+            </h2>
+            </div>
 
           <button
             className="
