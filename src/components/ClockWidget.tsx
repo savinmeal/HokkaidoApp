@@ -4,50 +4,108 @@ function ClockWidget() {
   const [now, setNow] = useState(new Date())
 
   useEffect(() => {
-    const timer = setInterval(() => {
+    const timer = window.setInterval(() => {
       setNow(new Date())
-    }, 1000)
+    }, 30_000)
 
-    return () => clearInterval(timer)
+    return () => {
+      window.clearInterval(timer)
+    }
   }, [])
 
+  // ------------------------------------------------------------
+  // 時間
+  // ------------------------------------------------------------
   const timeText = now.toLocaleTimeString('zh-TW', {
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
   })
 
-  const dateText = now.toLocaleDateString('zh-TW', {
-    month: '2-digit',
-    day: '2-digit',
+  // ------------------------------------------------------------
+  // 日期
+  // ------------------------------------------------------------
+  const month = now.getMonth() + 1
+  const day = now.getDate()
+
+  const weekday = now.toLocaleDateString('zh-TW', {
     weekday: 'long',
   })
 
+  // ------------------------------------------------------------
+  // Greeting
+  // ------------------------------------------------------------
   const hour = now.getHours()
 
-  let greeting = 'Good Evening'
+  let greeting = 'GOOD EVENING'
 
-  if (hour < 12) {
-    greeting = 'Good Morning'
+  if (hour < 5) {
+    greeting = 'GOOD NIGHT'
+  } else if (hour < 12) {
+    greeting = 'GOOD MORNING'
   } else if (hour < 18) {
-    greeting = 'Good Afternoon'
+    greeting = 'GOOD AFTERNOON'
   }
 
   return (
-    <div>
-      <p className="text-sm font-medium text-slate-500">
+    <div className="select-none">
+
+      {/* Greeting */}
+      <p
+        className="
+          text-[10px]
+          font-medium
+          tracking-[0.26em]
+          text-slate-800
+        "
+      >
         {greeting}
       </p>
 
-      <div className="mt-1 flex items-end gap-3">
-        <h1 className="text-4xl font-bold tracking-tight text-slate-900">
-          {timeText}
-        </h1>
+      {/* Time */}
+      <div className="mt-1">
 
-        <p className="pb-1 text-sm text-slate-500">
-          {dateText}
+        <p
+          className="
+            text-[52px]
+            font-light
+            leading-none
+            tracking-[-0.055em]
+            text-slate-900
+          "
+        >
+          {timeText}
         </p>
+
       </div>
+
+      {/* Date */}
+      <div className="mt-2 flex items-center gap-2">
+
+        <span
+          className="
+            text-[13px]
+            font-medium
+            text-slate-800
+          "
+        >
+          {month}月{day}日
+        </span>
+
+        <span className="h-1 w-1 rounded-full bg-slate-600/40" />
+
+        <span
+          className="
+            text-[13px]
+            font-medium
+            text-slate-800
+          "
+        >
+          {weekday}
+        </span>
+
+      </div>
+
     </div>
   )
 }
