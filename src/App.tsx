@@ -4,80 +4,127 @@ import Landing from './pages/Landing'
 import Launcher from './pages/Launcher'
 import TripApp from './TripApp'
 
+
 type AppStage =
   | 'landing'
   | 'landingToLauncher'
   | 'launcher'
-  | 'launcherToHokkaido'
-  | 'hokkaido'
+  | 'tripPreparing'
+  | 'tripEntering'
+  | 'trip'
+  | 'tripLeaving'
+
 
 function App() {
 
   const [stage, setStage] =
     useState<AppStage>('landing')
 
-  // ------------------------------------------------------------
+
+  // ============================================================
   // Landing → Launcher
-  // ------------------------------------------------------------
+  // ============================================================
   const handleEnterLauncher = () => {
 
     setStage('landingToLauncher')
 
     window.setTimeout(() => {
+
       setStage('launcher')
+
     }, 420)
   }
 
 
-  // ------------------------------------------------------------
-  // Launcher → Hokkaido
-  // ------------------------------------------------------------
+  // ============================================================
+  // Launcher → Trip
+  //
+  // Step 1:
+  // 先把 TripApp 建立在畫面下方
+  //
+  // Step 2:
+  // 下一個 browser frame 才開始往上移
+  //
+  // 這樣瀏覽器才能真正看到 transition
+  // ============================================================
   const handleOpenHokkaido = () => {
 
-    setStage('launcherToHokkaido')
+    // 先 mount
+    setStage('tripPreparing')
+
+
+    // 等 browser render 初始位置
+    window.requestAnimationFrame(() => {
+
+      window.requestAnimationFrame(() => {
+
+        // 開始由下往上
+        setStage('tripEntering')
+
+      })
+
+    })
+
+
+    // 動畫完成
+    window.setTimeout(() => {
+
+      setStage('trip')
+
+    }, 430)
+  }
+
+
+  // ============================================================
+  // Trip → Launcher
+  //
+  // 往下滑 + Fade Out
+  // ============================================================
+  const handleExitHokkaido = () => {
+
+    setStage('tripLeaving')
 
     window.setTimeout(() => {
-      setStage('hokkaido')
+
+      setStage('launcher')
+
     }, 420)
   }
 
 
-  // ------------------------------------------------------------
-  // Hokkaido → Launcher
-  // ------------------------------------------------------------
-  const handleExitHokkaido = () => {
-
-    setStage('launcher')
-  }
-
-
   // ============================================================
-  // Hokkaido
+  // State
   // ============================================================
-  if (stage === 'hokkaido') {
-
-    return (
-      <TripApp
-        onExit={handleExitHokkaido}
-      />
-    )
-  }
-
 
   const isLanding =
     stage === 'landing'
 
-  const isLandingTransition =
+  const isLandingToLauncher =
     stage === 'landingToLauncher'
 
-  const isLauncher =
-    stage === 'launcher'
 
-  const isLauncherTransition =
-    stage === 'launcherToHokkaido'
+  const showTrip =
+    stage === 'tripPreparing' ||
+    stage === 'tripEntering' ||
+    stage === 'trip' ||
+    stage === 'tripLeaving'
+
+
+  const isTripPreparing =
+    stage === 'tripPreparing'
+
+  const isTripEntering =
+    stage === 'tripEntering'
+
+  const isTrip =
+    stage === 'trip'
+
+  const isTripLeaving =
+    stage === 'tripLeaving'
 
 
   return (
+
     <div
       className="
         relative
@@ -87,13 +134,20 @@ function App() {
       "
     >
 
+
       {/* ======================================================
-          Launcher
-          
-          重點：
-          從 Landing 開始它就一直是同一個 Launcher。
-          不會在轉場完成後重新 mount。
+          LAUNCHER
+
+          Landing 時：
+          Launcher 放在稍微下面並透明
+
+          Landing → Launcher：
+          Launcher 由下往上 Fade In
+
+          Trip 開啟後：
+          Launcher 留在背景
       ====================================================== */}
+
       <div
         className={`
           absolute
@@ -106,26 +160,16 @@ function App() {
           ${
             isLanding
               ? `
-                  translate-y-6
-                  scale-[0.985]
+                  translate-y-10
                   opacity-0
                 `
-              : isLandingTransition
+              : isLandingToLauncher
               ? `
                   translate-y-0
-                  scale-100
                   opacity-100
                 `
-              : isLauncherTransition
-              ? `
-                  -translate-x-3
-                  scale-[0.97]
-                  opacity-0
-                `
               : `
-                  translate-x-0
                   translate-y-0
-                  scale-100
                   opacity-100
                 `
           }
@@ -141,28 +185,35 @@ function App() {
       </div>
 
 
+
       {/* ======================================================
-          Landing
+          LANDING
+
+          Landing → Launcher：
+          Landing 自己 Fade Out
+
+          Launcher 從下面進來
       ====================================================== */}
-      {(isLanding || isLandingTransition) && (
+
+      {(isLanding || isLandingToLauncher) && (
 
         <div
           className={`
             relative
-            z-20
+            z-30
 
             transition-all
             duration-[400ms]
             ease-out
 
             ${
-              isLandingTransition
+              isLandingToLauncher
                 ? `
-                    scale-[1.03]
+                    -translate-y-3
                     opacity-0
                   `
                 : `
-                    scale-100
+                    translate-y-0
                     opacity-100
                   `
             }
@@ -180,26 +231,73 @@ function App() {
       )}
 
 
+
       {/* ======================================================
-          TripApp Transition Layer
+          TRIP APP
+
+          tripPreparing
+          ↓
+          在畫面下方 + 透明
+
+          tripEntering
+          ↓
+          往上滑 + Fade In
+
+          trip
+          ↓
+          正常顯示
+
+          tripLeaving
+          ↓
+          往下滑 + Fade Out
       ====================================================== */}
-      {isLauncherTransition && (
+
+      {showTrip && (
 
         <div
-          className="
+          className={`
             absolute
             inset-0
-            z-30
+            z-40
 
-            animate-[tripEnter_400ms_ease-out_forwards]
-          "
-          style={{
-            animation: 'tripEnter 400ms ease-out forwards',
-          }}
+            transition-all
+            duration-[400ms]
+            ease-out
+
+            ${
+              isTripPreparing
+                ? `
+                    translate-y-8
+                    opacity-0
+                  `
+
+              : isTripEntering
+                ? `
+                    translate-y-0
+                    opacity-100
+                  `
+
+              : isTrip
+                ? `
+                    translate-y-0
+                    opacity-100
+                  `
+
+              : isTripLeaving
+                ? `
+                    translate-y-8
+                    opacity-0
+                  `
+
+              : ''
+            }
+          `}
         >
 
           <TripApp
-            onExit={handleExitHokkaido}
+            onExit={
+              handleExitHokkaido
+            }
           />
 
         </div>
