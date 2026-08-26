@@ -6,13 +6,138 @@ import {
 
 
 // ============================================================
+// Ski Resort Area
+// ============================================================
+
+type SkiResort = {
+  id: string
+  name: string
+  shortName: string
+  latitude: number
+  longitude: number
+}
+
+
+type SkiResortArea = {
+  id: string
+  label: string
+  note?: string
+  resorts: SkiResort[]
+}
+
+
+// ============================================================
+// Popular Resorts By Weather Area
+//
+// 各 Weather 城市對應附近代表性人氣滑雪場。
+// ============================================================
+
+const SKI_RESORT_AREAS: Record<string, SkiResortArea> = {
+
+  sapporo: {
+    id: 'sapporo',
+    label: '札幌',
+    resorts: [
+      {
+        id: 'sapporo-teine',
+        name: 'SAPPORO TEINE',
+        shortName: '手稻',
+        latitude: 43.08655,
+        longitude: 141.20419,
+      },
+      {
+        id: 'sapporo-kokusai',
+        name: '札幌國際滑雪場',
+        shortName: '札幌國際',
+        latitude: 43.07301,
+        longitude: 141.07035,
+      },
+    ],
+  },
+
+
+  asahikawa: {
+    id: 'asahikawa',
+    label: '旭川',
+    resorts: [
+      {
+        id: 'kamui-ski-links',
+        name: 'KAMUI SKI LINKS',
+        shortName: 'KAMUI',
+        latitude: 43.70389,
+        longitude: 142.18667,
+      },
+    ],
+  },
+
+
+  furano: {
+    id: 'furano',
+    label: '富良野',
+    resorts: [
+      {
+        id: 'furano-ski-area',
+        name: '富良野滑雪場',
+        shortName: '富良野',
+        latitude: 43.3300,
+        longitude: 142.3503,
+      },
+    ],
+  },
+
+
+  otaru: {
+    id: 'otaru',
+    label: '小樽',
+    resorts: [
+      {
+        id: 'otaru-tenguyama',
+        name: '小樽天狗山滑雪場',
+        shortName: '天狗山',
+        latitude: 43.17361,
+        longitude: 140.97128,
+      },
+      {
+        id: 'asarigawa',
+        name: '朝里川溫泉滑雪場',
+        shortName: '朝里川',
+        latitude: 43.13832,
+        longitude: 141.02596,
+      },
+    ],
+  },
+
+
+  niseko: {
+    id: 'niseko',
+    label: '二世古',
+    resorts: [
+      {
+        id: 'grand-hirafu',
+        name: 'NISEKO TOKYU GRAND HIRAFU',
+        shortName: 'Grand Hirafu',
+        latitude: 42.86197,
+        longitude: 140.69789,
+      },
+      {
+        id: 'hanazono',
+        name: 'NISEKO HANAZONO RESORT',
+        shortName: 'Hanazono',
+        latitude: 42.89306,
+        longitude: 140.69972,
+      },
+    ],
+  },
+
+}
+
+
+// ============================================================
 // Props
 // ============================================================
 
 type SnowForecastBlockProps = {
-  locationName: string
-  latitude: number
-  longitude: number
+  areaId: string
 }
 
 
@@ -362,10 +487,43 @@ function getSnowConditionAssessment(
 // ============================================================
 
 function SnowForecastBlock({
-  locationName,
-  latitude,
-  longitude,
+  areaId,
 }: SnowForecastBlockProps) {
+
+
+  // ==========================================================
+  // Selected Ski Area / Resort
+  // ==========================================================
+
+  const selectedArea =
+    SKI_RESORT_AREAS[areaId] ??
+    SKI_RESORT_AREAS.niseko
+
+
+  const [
+    selectedResortIndex,
+    setSelectedResortIndex,
+  ] = useState(0)
+
+
+  const selectedResort =
+    selectedArea.resorts[
+      Math.min(
+        selectedResortIndex,
+        selectedArea.resorts.length - 1
+      )
+    ]
+
+
+  // 切換上方 Weather 城市時，
+  // 回到該區第一個人氣雪場
+  useEffect(() => {
+
+    setSelectedResortIndex(0)
+
+  }, [
+    areaId,
+  ])
 
 
   // ==========================================================
@@ -446,8 +604,8 @@ function SnowForecastBlock({
 
         const url =
           `https://api.open-meteo.com/v1/forecast` +
-          `?latitude=${latitude}` +
-          `&longitude=${longitude}` +
+          `?latitude=${selectedResort.latitude}` +
+          `&longitude=${selectedResort.longitude}` +
           `&hourly=${hourlyVariables}` +
           `&daily=${dailyVariables}` +
           `&forecast_days=7` +
@@ -609,8 +767,9 @@ function SnowForecastBlock({
     }
 
   }, [
-    latitude,
-    longitude,
+    selectedResort.id,
+    selectedResort.latitude,
+    selectedResort.longitude,
   ])
 
 
@@ -903,17 +1062,135 @@ function SnowForecastBlock({
           </p>
 
 
-          <p
+          <div
             className="
-              text-[12px]
-              font-medium
-              text-white/70
+              text-right
             "
           >
-            {locationName}
-          </p>
+
+            <p
+              className="
+                text-[12px]
+                font-medium
+                text-white/70
+              "
+            >
+              {selectedArea.label}
+            </p>
+
+
+            {selectedArea.note && (
+
+              <p
+                className="
+                  mt-1
+                  text-[8px]
+                  text-white/25
+                "
+              >
+                {selectedArea.note}
+              </p>
+
+            )}
+
+          </div>
 
         </div>
+
+
+
+        {/* ====================================================
+            Resort Selector
+        ==================================================== */}
+
+        <div
+          className="
+            mt-4
+            flex
+            gap-2
+            overflow-x-auto
+            pb-1
+            [scrollbar-width:none]
+            [&::-webkit-scrollbar]:hidden
+          "
+        >
+
+          {selectedArea.resorts.map(
+            (
+              resort,
+              index
+            ) => {
+
+              const isSelected =
+                index ===
+                selectedResortIndex
+
+
+              return (
+
+                <button
+                  key={resort.id}
+
+                  type="button"
+
+                  onClick={() => {
+
+                    setSelectedResortIndex(
+                      index
+                    )
+
+                  }}
+
+                  className={`
+                    shrink-0
+                    rounded-full
+                    border
+                    px-3
+                    py-1.5
+                    text-[10px]
+                    font-medium
+                    transition-all
+                    duration-300
+
+                    ${
+                      isSelected
+                        ? `
+                            border-white/20
+                            bg-white/12
+                            text-white
+                          `
+                        : `
+                            border-white/[0.06]
+                            bg-white/[0.025]
+                            text-white/35
+                          `
+                    }
+                  `}
+                >
+                  {resort.shortName}
+                </button>
+
+              )
+
+            }
+          )}
+
+        </div>
+
+
+
+        {/* Selected Resort */}
+
+        <p
+          className="
+            mt-2
+            text-[10px]
+            tracking-[0.04em]
+            text-white/35
+          "
+        >
+          {selectedResort.name}
+        </p>
 
 
 

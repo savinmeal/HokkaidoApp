@@ -41,11 +41,11 @@ const WEATHER_REGIONS: WeatherRegion[] = [
   },
 
   {
-    id: 'new-chitose',
-    name: '新千歲',
-    englishName: 'NEW CHITOSE',
-    latitude: 42.7752,
-    longitude: 141.6923,
+    id: 'furano',
+    name: '富良野',
+    englishName: 'FURANO',
+    latitude: 43.3394,
+    longitude: 142.3869,
   },
 
   {
@@ -508,7 +508,8 @@ function Home() {
         }
 
 
-        const data = (await response.json()) as OpenMeteoResponse
+        const data =
+          (await response.json()) as OpenMeteoResponse
 
 
 
@@ -2552,9 +2553,7 @@ function Home() {
       >
 
         <SnowForecastBlock
-          locationName="二世古"
-          latitude={42.8048}
-          longitude={140.6874}
+          areaId={selectedRegion.id}
         />
 
       </section>
