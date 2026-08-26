@@ -4,69 +4,79 @@ import Landing from './pages/Landing'
 import Launcher from './pages/Launcher'
 import TripApp from './TripApp'
 
-type Screen =
+type AppStage =
   | 'landing'
+  | 'landingToLauncher'
   | 'launcher'
+  | 'launcherToHokkaido'
   | 'hokkaido'
 
 function App() {
 
-  const [screen, setScreen] =
-    useState<Screen>('landing')
-
-  const [landingExit, setLandingExit] =
-    useState(false)
+  const [stage, setStage] =
+    useState<AppStage>('landing')
 
   // ------------------------------------------------------------
   // Landing → Launcher
   // ------------------------------------------------------------
   const handleEnterLauncher = () => {
 
-    // 啟動轉場動畫
-    setLandingExit(true)
+    setStage('landingToLauncher')
 
-    // 動畫結束後正式切換頁面
     window.setTimeout(() => {
-
-      setScreen('launcher')
-
-      // 重設狀態
-      setLandingExit(false)
-
-    }, 550)
+      setStage('launcher')
+    }, 420)
   }
 
+
   // ------------------------------------------------------------
-  // Hokkaido App
+  // Launcher → Hokkaido
   // ------------------------------------------------------------
-  if (screen === 'hokkaido') {
+  const handleOpenHokkaido = () => {
+
+    setStage('launcherToHokkaido')
+
+    window.setTimeout(() => {
+      setStage('hokkaido')
+    }, 420)
+  }
+
+
+  // ------------------------------------------------------------
+  // Hokkaido → Launcher
+  // ------------------------------------------------------------
+  const handleExitHokkaido = () => {
+
+    setStage('launcher')
+  }
+
+
+  // ============================================================
+  // Hokkaido
+  // ============================================================
+  if (stage === 'hokkaido') {
 
     return (
       <TripApp
-        onExit={() =>
-          setScreen('launcher')
-        }
+        onExit={handleExitHokkaido}
       />
     )
   }
 
-  // ------------------------------------------------------------
-  // Launcher
-  // ------------------------------------------------------------
-  if (screen === 'launcher') {
 
-    return (
-      <Launcher
-        onOpenHokkaido={() =>
-          setScreen('hokkaido')
-        }
-      />
-    )
-  }
+  const isLanding =
+    stage === 'landing'
 
-  // ------------------------------------------------------------
-  // Landing
-  // ------------------------------------------------------------
+  const isLandingTransition =
+    stage === 'landingToLauncher'
+
+  const isLauncher =
+    stage === 'launcher'
+
+  const isLauncherTransition =
+    stage === 'launcherToHokkaido'
+
+
   return (
     <div
       className="
@@ -77,65 +87,124 @@ function App() {
       "
     >
 
-      {/* Launcher 預先放在 Landing 後面 */}
+      {/* ======================================================
+          Launcher
+          
+          重點：
+          從 Landing 開始它就一直是同一個 Launcher。
+          不會在轉場完成後重新 mount。
+      ====================================================== */}
       <div
         className={`
           absolute
           inset-0
+
           transition-all
-          duration-500
+          duration-[400ms]
           ease-out
 
           ${
-            landingExit
+            isLanding
+              ? `
+                  translate-y-6
+                  scale-[0.985]
+                  opacity-0
+                `
+              : isLandingTransition
               ? `
                   translate-y-0
                   scale-100
                   opacity-100
                 `
-              : `
-                  translate-y-8
-                  scale-[0.985]
-                  opacity-0
-                `
-          }
-        `}
-      >
-        <Launcher
-          onOpenHokkaido={() =>
-            setScreen('hokkaido')
-          }
-        />
-      </div>
-
-
-      {/* Landing */}
-      <div
-        className={`
-          relative
-          z-10
-
-          transition-all
-          duration-400
-          ease-out
-
-          ${
-            landingExit
+              : isLauncherTransition
               ? `
-                  scale-[1.04]
+                  -translate-x-3
+                  scale-[0.97]
                   opacity-0
                 `
               : `
+                  translate-x-0
+                  translate-y-0
                   scale-100
                   opacity-100
                 `
           }
         `}
       >
-        <Landing
-          onEnter={handleEnterLauncher}
+
+        <Launcher
+          onOpenHokkaido={
+            handleOpenHokkaido
+          }
         />
+
       </div>
+
+
+      {/* ======================================================
+          Landing
+      ====================================================== */}
+      {(isLanding || isLandingTransition) && (
+
+        <div
+          className={`
+            relative
+            z-20
+
+            transition-all
+            duration-[400ms]
+            ease-out
+
+            ${
+              isLandingTransition
+                ? `
+                    scale-[1.03]
+                    opacity-0
+                  `
+                : `
+                    scale-100
+                    opacity-100
+                  `
+            }
+          `}
+        >
+
+          <Landing
+            onEnter={
+              handleEnterLauncher
+            }
+          />
+
+        </div>
+
+      )}
+
+
+      {/* ======================================================
+          TripApp Transition Layer
+      ====================================================== */}
+      {isLauncherTransition && (
+
+        <div
+          className="
+            absolute
+            inset-0
+            z-30
+
+            animate-[tripEnter_400ms_ease-out_forwards]
+          "
+          style={{
+            animation: 'tripEnter 400ms ease-out forwards',
+          }}
+        >
+
+          <TripApp
+            onExit={handleExitHokkaido}
+          />
+
+        </div>
+
+      )}
 
     </div>
   )
