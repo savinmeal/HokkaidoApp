@@ -68,6 +68,7 @@ function Launcher({
 
               <ClockWidget />
 
+
             </div>
 
             <button
@@ -260,11 +261,54 @@ function Launcher({
                     text-slate-800
                   "
                 >
+                  2026-12
+                  <br />
                   北海道
                 </span>
 
               </button>
+              {/* Hakuba */}
+              <button
+                onClick={onOpenHokkaido}
+                className="
+                  group
+                  flex
+                  flex-col
+                  items-center
+                  text-center
+                "
+              >
 
+                <img
+                  src={hokkaidoIcon}
+                  alt="2026 北海道"
+                  className="
+                    h-[72px]
+                    w-[72px]
+                    rounded-[22px]
+                    object-cover
+                    shadow-lg
+                    shadow-blue-900/20
+                    transition
+                    group-active:scale-95
+                  "
+                />
+
+                <span
+                  className="
+                    mt-2
+                    text-[12px]
+                    font-medium
+                    leading-4
+                    text-slate-800
+                  "
+                >
+                  2027-02
+                  <br />
+                  白馬
+                </span>
+
+              </button>
 
               {/* New Trip */}
               <button
