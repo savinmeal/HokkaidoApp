@@ -137,7 +137,7 @@ function Landing({ onEnter }: LandingProps) {
           min-h-screen
           w-full
           max-w-md
-          overflow-hidden
+          overflow-x-hidden
           bg-cover
           bg-center
           text-white
