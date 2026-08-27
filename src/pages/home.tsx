@@ -1,4 +1,7 @@
 import SnowForecastBlock from '../components/SnowForecastBlock'
+import HomeEditPanel from '../components/HomeEditPanel'
+import PaymentMethodWallet from '../components/PaymentMethodWallet'
+import SnowPassWallet from '../components/SnowPassWallet'
 
 import {
   useEffect,
@@ -7,63 +10,153 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from 'react'
 
-import { tripInfo } from '../data/tripData'
+import {
+  TRIP_STORAGE_KEY,
+  tripDays,
+  tripInfo,
+  tripRegions,
+  type TripDay,
+} from '../data/tripData'
+
+import {
+  loadHomeModuleVisibility,
+  saveHomeModuleVisibility,
+  type HomeModuleVisibility,
+} from '../data/homePreferences'
 
 
 // ============================================================
-// Weather Region
+// Weather Regions
+//
+// 與 Trip Page 共用同一份城市資料。
 // ============================================================
 
-type WeatherRegion = {
-  id: string
-  name: string
-  englishName: string
-  latitude: number
-  longitude: number
+const WEATHER_REGIONS =
+  tripRegions
+
+
+// ============================================================
+// Japan Local Date
+// ============================================================
+
+function getJapanDateString() {
+
+  return new Intl.DateTimeFormat(
+    'sv-SE',
+    {
+      timeZone:
+        'Asia/Tokyo',
+
+      year:
+        'numeric',
+
+      month:
+        '2-digit',
+
+      day:
+        '2-digit',
+    }
+  )
+    .format(
+      new Date()
+    )
 }
 
 
-const WEATHER_REGIONS: WeatherRegion[] = [
-  {
-    id: 'sapporo',
-    name: '札幌',
-    englishName: 'SAPPORO',
-    latitude: 43.0618,
-    longitude: 141.3545,
-  },
+// ============================================================
+// Initial Weather Region
+//
+// 若今天剛好是旅行日期，且該 DAY 已設定城市，
+// Home 第一次開啟時自動顯示該城市。
+//
+// 旅行日期之外仍預設札幌，使用者可自由手動切換。
+// ============================================================
 
-  {
-    id: 'asahikawa',
-    name: '旭川',
-    englishName: 'ASAHIKAWA',
-    latitude: 43.7706,
-    longitude: 142.3650,
-  },
+function getInitialWeatherRegionIndex() {
 
-  {
-    id: 'furano',
-    name: '富良野',
-    englishName: 'FURANO',
-    latitude: 43.3394,
-    longitude: 142.3869,
-  },
+  if (
+    typeof window ===
+    'undefined'
+  ) {
+    return 0
+  }
 
-  {
-    id: 'otaru',
-    name: '小樽',
-    englishName: 'OTARU',
-    latitude: 43.1907,
-    longitude: 140.9947,
-  },
 
-  {
-    id: 'niseko',
-    name: '二世古',
-    englishName: 'NISEKO',
-    latitude: 42.8048,
-    longitude: 140.6874,
-  },
-]
+  try {
+
+    const saved =
+      localStorage.getItem(
+        TRIP_STORAGE_KEY
+      )
+
+
+    let days: TripDay[] =
+      tripDays
+
+
+    if (saved) {
+
+      const parsed =
+        JSON.parse(
+          saved
+        ) as TripDay[]
+
+
+      if (
+        Array.isArray(
+          parsed
+        ) &&
+        parsed.length > 0
+      ) {
+        days =
+          parsed
+      }
+
+    }
+
+
+    const today =
+      getJapanDateString()
+
+
+    const todayTripDay =
+      days.find(
+        day =>
+          day.date === today
+      )
+
+
+    if (
+      !todayTripDay?.regionId
+    ) {
+      return 0
+    }
+
+
+    const regionIndex =
+      WEATHER_REGIONS.findIndex(
+        region =>
+          region.id ===
+          todayTripDay.regionId
+      )
+
+
+    return regionIndex >= 0
+      ? regionIndex
+      : 0
+
+  } catch (error) {
+
+    console.error(
+      'Weather trip region load failed:',
+      error
+    )
+
+
+    return 0
+
+  }
+}
 
 
 // ============================================================
@@ -314,13 +407,45 @@ function Home() {
 
 
   // ==========================================================
+  // Home Module Visibility
+  // ==========================================================
+
+  const [
+    homeEditOpen,
+    setHomeEditOpen,
+  ] = useState(false)
+
+
+  const [
+    homeVisibility,
+    setHomeVisibility,
+  ] = useState<HomeModuleVisibility>(
+    loadHomeModuleVisibility
+  )
+
+
+  useEffect(() => {
+
+    saveHomeModuleVisibility(
+      homeVisibility
+    )
+
+  }, [
+    homeVisibility,
+  ])
+
+
+
+  // ==========================================================
   // Weather Region
   // ==========================================================
 
   const [
     selectedRegionIndex,
     setSelectedRegionIndex,
-  ] = useState(0)
+  ] = useState(
+    getInitialWeatherRegionIndex
+  )
 
 
   const selectedRegion =
@@ -1045,6 +1170,49 @@ function Home() {
     >
 
 
+      <div
+        className="
+          mb-3
+          flex
+          justify-end
+        "
+      >
+        <button
+          type="button"
+          aria-label="編輯 Home 顯示"
+
+          onPointerDown={event => {
+            event.stopPropagation()
+          }}
+
+          onClick={() =>
+            setHomeEditOpen(
+              true
+            )
+          }
+
+          className="
+            rounded-full
+            border
+            border-slate-300/80
+            bg-white/55
+            px-3
+            py-1.5
+            text-[9px]
+            font-semibold
+            tracking-[0.12em]
+            text-slate-700
+            shadow-sm
+            backdrop-blur-xl
+            transition
+            active:scale-[0.97]
+          "
+        >
+          EDIT
+        </button>
+      </div>
+
+
       {/* ======================================================
           Trip Header
       ====================================================== */}
@@ -1131,6 +1299,7 @@ function Home() {
           WEATHER BLOCK
       ====================================================== */}
 
+      {homeVisibility.weather && (
       <section className="mt-8">
 
         <div
@@ -2537,6 +2706,7 @@ function Home() {
         </div>
 
       </section>
+      )}
 
 
 
@@ -2544,6 +2714,7 @@ function Home() {
           SKI SNOW FORECAST
       ====================================================== */}
 
+      {homeVisibility.snowForecast && (
       <section
         className="mt-5"
         onPointerDown={(event) => {
@@ -2557,14 +2728,26 @@ function Home() {
         />
 
       </section>
+      )}
 
 
+
+
+      {homeVisibility.snowPass && (
+        <SnowPassWallet />
+      )}
+
+
+      {homeVisibility.paymentMethods && (
+        <PaymentMethodWallet />
+      )}
 
 
       {/* ======================================================
           Trip Status
       ====================================================== */}
 
+      {homeVisibility.tripStatus && (
       <section className="mt-10">
 
         <div
@@ -2798,6 +2981,7 @@ function Home() {
         </div>
 
       </section>
+      )}
 
 
 
@@ -2805,6 +2989,7 @@ function Home() {
           Planning
       ====================================================== */}
 
+      {homeVisibility.quickLinks && (
       <section className="mt-10">
 
         <p
@@ -2926,6 +3111,28 @@ function Home() {
         </div>
 
       </section>
+      )}
+
+      <HomeEditPanel
+        open={
+          homeEditOpen
+        }
+
+        visibility={
+          homeVisibility
+        }
+
+        onChange={
+          setHomeVisibility
+        }
+
+        onClose={() =>
+          setHomeEditOpen(
+            false
+          )
+        }
+      />
+
 
     </main>
 

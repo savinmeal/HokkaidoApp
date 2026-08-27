@@ -3,11 +3,11 @@ import {
   useState,
 } from 'react'
 
-import Home from './pages/Home'
+import Home from './pages/home'
 import Trip from './pages/Trip'
-import Map from './pages/Map'
-import Memory from './pages/Memory'
-import More from './pages/More'
+import Map from './pages/map'
+import Memory from './pages/memory'
+import More from './pages/more'
 
 import BottomNavigation from './components/BottomNavigation'
 
