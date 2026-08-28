@@ -46,9 +46,12 @@ function TripApp({
   // Page
   // ==========================================================
 
-  const [activePage, setActivePage] =
-    useState('home')
-
+  const [
+    activePage,
+    setActivePage,
+  ] = useState(
+    'home'
+  )
 
 
   // ==========================================================
@@ -56,62 +59,73 @@ function TripApp({
   // ==========================================================
 
   const appRef =
-    useRef<HTMLDivElement>(null)
+    useRef<HTMLDivElement>(
+      null
+    )
 
 
-  const [swipeX, setSwipeX] =
-    useState(0)
+  const [
+    swipeX,
+    setSwipeX,
+  ] = useState(0)
 
 
-  const [isSwiping, setIsSwiping] =
-    useState(false)
+  const [
+    isSwiping,
+    setIsSwiping,
+  ] = useState(false)
 
 
-  const gestureRef = useRef({
+  const gestureRef =
+    useRef({
 
-    startX: 0,
+      startX:
+        0,
 
-    startY: 0,
+      startY:
+        0,
 
-    direction:
-      null as GestureDirection,
+      direction:
+        null as GestureDirection,
 
-    active: false,
+      active:
+        false,
 
-  })
-
+    })
 
 
   // ==========================================================
   // Page Render
   // ==========================================================
 
-  const renderPage = () => {
+  const renderPage =
+    () => {
 
-    switch (activePage) {
+      switch (
+        activePage
+      ) {
 
-      case 'home':
-        return <Home />
+        case 'home':
+          return <Home />
 
-      case 'trip':
-        return <Trip />
+        case 'trip':
+          return <Trip />
 
-      case 'map':
-        return <Map />
+        case 'map':
+          return <Map />
 
-      case 'memory':
-        return <Memory />
+        case 'memory':
+          return <Memory />
 
-      case 'more':
-        return <More />
+        case 'more':
+          return <More />
 
-      default:
-        return <Home />
+        default:
+          return <Home />
+
+      }
 
     }
-
-  }
-
 
 
   // ==========================================================
@@ -119,12 +133,29 @@ function TripApp({
   // ==========================================================
 
   const handlePointerDown = (
-    event: React.PointerEvent<HTMLDivElement>
+    event:
+      React.PointerEvent<HTMLDivElement>
   ) => {
 
-    // 滑鼠只接受左鍵
+    const target =
+      event.target as HTMLElement
+
+
+    // Bottom Sheet / modal / 特殊水平捲動元件
+    // 不參與全頁 Swipe Back。
     if (
-      event.pointerType === 'mouse' &&
+      target.closest(
+        '[data-disable-swipe-back="true"]'
+      )
+    ) {
+      return
+    }
+
+
+    // 滑鼠只接受左鍵。
+    if (
+      event.pointerType ===
+        'mouse' &&
       event.button !== 0
     ) {
       return
@@ -148,10 +179,11 @@ function TripApp({
     }
 
 
-    setIsSwiping(false)
+    setIsSwiping(
+      false
+    )
 
   }
-
 
 
   // ==========================================================
@@ -159,11 +191,27 @@ function TripApp({
   // ==========================================================
 
   const handlePointerMove = (
-    event: React.PointerEvent<HTMLDivElement>
+    event:
+      React.PointerEvent<HTMLDivElement>
   ) => {
 
     if (
       !gestureRef.current.active
+    ) {
+      return
+    }
+
+
+    const target =
+      event.target as HTMLElement
+
+
+    // 水平 carousel / day selector 自己處理橫向移動，
+    // 避免與全頁 Swipe Back 互搶。
+    if (
+      target.closest(
+        '[data-horizontal-scroll="true"]'
+      )
     ) {
       return
     }
@@ -180,18 +228,19 @@ function TripApp({
 
 
     const absX =
-      Math.abs(dx)
+      Math.abs(
+        dx
+      )
 
 
     const absY =
-      Math.abs(dy)
-
+      Math.abs(
+        dy
+      )
 
 
     // --------------------------------------------------------
     // Direction Lock
-    //
-    // 移動超過 8px 才開始判斷方向
     // --------------------------------------------------------
 
     if (
@@ -207,7 +256,6 @@ function TripApp({
       }
 
 
-      // 水平移動明顯大於垂直
       if (
         absX >
         absY * 1.15
@@ -226,11 +274,8 @@ function TripApp({
     }
 
 
-
     // --------------------------------------------------------
     // Vertical
-    //
-    // 上下操作交給原本的 Scroll
     // --------------------------------------------------------
 
     if (
@@ -241,7 +286,6 @@ function TripApp({
     }
 
 
-
     // --------------------------------------------------------
     // 不接受往左滑
     // --------------------------------------------------------
@@ -250,11 +294,12 @@ function TripApp({
       dx <= 0
     ) {
 
-      setSwipeX(0)
+      setSwipeX(
+        0
+      )
 
       return
     }
-
 
 
     // --------------------------------------------------------
@@ -262,11 +307,11 @@ function TripApp({
     // --------------------------------------------------------
 
     const appWidth =
-      appRef.current?.clientWidth ??
+      appRef.current
+        ?.clientWidth ??
       window.innerWidth
 
 
-    // 防止超過整個 App 寬度
     const limitedX =
       Math.min(
         dx,
@@ -274,130 +319,134 @@ function TripApp({
       )
 
 
-    setIsSwiping(true)
+    setIsSwiping(
+      true
+    )
 
-    setSwipeX(limitedX)
+    setSwipeX(
+      limitedX
+    )
 
   }
-
 
 
   // ==========================================================
   // Pointer Up
   // ==========================================================
 
-  const handlePointerUp = () => {
+  const handlePointerUp =
+    () => {
 
-    if (
-      !gestureRef.current.active
-    ) {
-      return
-    }
-
-
-    gestureRef.current.active =
-      false
+      if (
+        !gestureRef.current.active
+      ) {
+        return
+      }
 
 
+      gestureRef.current.active =
+        false
 
-    // --------------------------------------------------------
-    // 如果剛剛是上下 Scroll
-    // 不做任何返回
-    // --------------------------------------------------------
 
-    if (
-      gestureRef.current.direction !==
-      'horizontal'
-    ) {
+      if (
+        gestureRef.current.direction !==
+        'horizontal'
+      ) {
+
+        gestureRef.current.direction =
+          null
+
+        return
+
+      }
+
+
+      const appWidth =
+        appRef.current
+          ?.clientWidth ??
+        window.innerWidth
+
+
+      const threshold =
+        appWidth *
+        0.25
+
+
+      // --------------------------------------------------------
+      // Swipe Success
+      // --------------------------------------------------------
+
+      if (
+        swipeX >=
+        threshold
+      ) {
+
+        setIsSwiping(
+          false
+        )
+
+
+        setSwipeX(
+          appWidth
+        )
+
+
+        window.setTimeout(
+          () => {
+
+            onExit()
+
+          },
+          220
+        )
+
+
+        return
+
+      }
+
+
+      // --------------------------------------------------------
+      // Swipe Cancel
+      // --------------------------------------------------------
+
+      setIsSwiping(
+        false
+      )
+
+      setSwipeX(
+        0
+      )
 
       gestureRef.current.direction =
         null
 
-      return
-
     }
-
-
-
-    const appWidth =
-      appRef.current?.clientWidth ??
-      window.innerWidth
-
-
-    // --------------------------------------------------------
-    // 返回門檻
-    //
-    // App 寬度 25%
-    // --------------------------------------------------------
-
-    const threshold =
-      appWidth * 0.25
-
-
-
-    // --------------------------------------------------------
-    // Swipe Success
-    // --------------------------------------------------------
-
-    if (
-      swipeX >= threshold
-    ) {
-
-      setIsSwiping(false)
-
-
-      // 先將整個 App 滑到右邊
-      setSwipeX(appWidth)
-
-
-      window.setTimeout(() => {
-
-        onExit()
-
-      }, 220)
-
-
-      return
-
-    }
-
-
-
-    // --------------------------------------------------------
-    // Swipe Cancel
-    //
-    // 沒滑夠 → 彈回原位
-    // --------------------------------------------------------
-
-    setIsSwiping(false)
-
-    setSwipeX(0)
-
-    gestureRef.current.direction =
-      null
-
-  }
-
 
 
   // ==========================================================
   // Pointer Cancel
   // ==========================================================
 
-  const handlePointerCancel = () => {
+  const handlePointerCancel =
+    () => {
 
-    gestureRef.current.active =
-      false
+      gestureRef.current.active =
+        false
 
-    gestureRef.current.direction =
-      null
+      gestureRef.current.direction =
+        null
 
-    setIsSwiping(false)
 
-    setSwipeX(0)
+      setIsSwiping(
+        false
+      )
 
-  }
+      setSwipeX(
+        0
+      )
 
+    }
 
 
   // ==========================================================
@@ -405,21 +454,23 @@ function TripApp({
   // ==========================================================
 
   const appWidth =
-    appRef.current?.clientWidth ??
+    appRef.current
+      ?.clientWidth ??
     448
 
 
   const swipeProgress =
     Math.min(
-      swipeX / appWidth,
+      swipeX /
+      appWidth,
       1
     )
 
 
   const opacity =
     1 -
-    swipeProgress * 0.12
-
+    swipeProgress *
+    0.12
 
 
   // ==========================================================
@@ -429,7 +480,9 @@ function TripApp({
   return (
 
     <div
-      ref={appRef}
+      ref={
+        appRef
+      }
 
       onPointerDown={
         handlePointerDown
@@ -451,29 +504,27 @@ function TripApp({
         relative
         mx-auto
         flex
-        h-[100dvh]
+        h-full
+        min-h-0
         w-full
         max-w-md
         flex-col
         overflow-hidden
+        bg-slate-950
         shadow-2xl
         shadow-black/20
       "
 
       style={{
 
-        // 上下 Scroll 保留原生行為
         touchAction:
           'pan-y',
 
-        // 整個 App 跟著右滑
         transform:
           `translateX(${swipeX}px)`,
 
         opacity,
 
-        // 拖曳時跟手
-        // 放手後才加入動畫
         transition:
           isSwiping
             ? 'none'
@@ -486,14 +537,8 @@ function TripApp({
       }}
     >
 
-
       {/* ======================================================
           FIXED BACKGROUND
-
-          ★ 背景完全獨立
-          ★ 永遠固定為 100dvh
-          ★ 不跟 Home Content 高度變化
-          ★ 不跟 Scroll 移動
       ====================================================== */}
 
       <div
@@ -514,12 +559,8 @@ function TripApp({
       />
 
 
-
       {/* ======================================================
           BACKGROUND OVERLAY
-
-          很淡的白色遮罩
-          讓文字在雪景上比較清楚
       ====================================================== */}
 
       <div
@@ -533,12 +574,11 @@ function TripApp({
       />
 
 
-
       {/* ======================================================
           HEADER
 
-          固定
-          不參與 Scroll
+          Header 自己處理 iPhone 上方 Safe Area。
+          不參與 Content Scroll。
       ====================================================== */}
 
       <header
@@ -548,7 +588,7 @@ function TripApp({
           shrink-0
           px-6
           pb-3
-          pt-5
+          pt-[calc(12px+env(safe-area-inset-top))]
         "
       >
 
@@ -573,12 +613,13 @@ function TripApp({
       </header>
 
 
-
       {/* ======================================================
-          CONTENT
+          CONTENT AREA
 
-          ★ 唯一 Scroll 區域
-          ★ 背景不會一起 Scroll
+          ★ 這裡才是唯一垂直 Scroll 區域
+          ★ 高度 = App - Header - BottomNavigation
+          ★ BottomNavigation 不在這個區域裡
+          ★ 所以內容不可能被 BottomNavigation 蓋住
       ====================================================== */}
 
       <div
@@ -587,9 +628,10 @@ function TripApp({
           z-10
           min-h-0
           flex-1
-          overflow-y-auto
           overflow-x-hidden
+          overflow-y-auto
           overscroll-contain
+          [-webkit-overflow-scrolling:touch]
         "
       >
 
@@ -598,12 +640,14 @@ function TripApp({
       </div>
 
 
-
       {/* ======================================================
-          BOTTOM NAVIGATION
+          BOTTOM NAVIGATION AREA
 
-          固定在 App 最下方
-          不跟內容 Scroll
+          ★ 正常 Flex Flow
+          ★ 不使用 fixed
+          ★ 不使用 absolute
+          ★ 真正從 Content 可用高度扣除
+          ★ Safe Area 在 BottomNavigation 元件內處理
       ====================================================== */}
 
       <div
@@ -615,7 +659,6 @@ function TripApp({
       >
 
         <BottomNavigation
-
           activePage={
             activePage
           }
@@ -623,15 +666,14 @@ function TripApp({
           onPageChange={
             setActivePage
           }
-
         />
 
       </div>
 
-
     </div>
 
   )
+
 }
 
 

@@ -4098,8 +4098,9 @@ function Trip() {
         mx-auto
         w-full
         max-w-md
+        overflow-x-hidden
         px-5
-        pb-12
+        pb-6
         pt-3
       "
     >

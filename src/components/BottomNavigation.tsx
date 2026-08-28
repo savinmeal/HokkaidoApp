@@ -289,10 +289,16 @@ function BottomNavigation({
 
     <div
       className="
+        relative
         w-full
+        shrink-0
+        bg-gradient-to-t
+        from-white/90
+        via-white/55
+        to-transparent
         px-3
-        pb-[max(10px,env(safe-area-inset-bottom))]
         pt-2
+        pb-[max(10px,env(safe-area-inset-bottom))]
       "
     >
 
