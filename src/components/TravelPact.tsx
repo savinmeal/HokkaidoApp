@@ -220,6 +220,141 @@ function TravelPact({
 
 
   // ==========================================================
+  // Open / Close Animation
+  //
+  // shouldRender:
+  //   控制元件是否仍留在 DOM，讓關閉動畫有時間播放。
+  //
+  // animationOpen:
+  //   true  = 契約停在畫面中央
+  //   false = 契約位於畫面下方
+  // ==========================================================
+
+  const [
+    shouldRender,
+    setShouldRender,
+  ] = useState(
+    open
+  )
+
+
+  const [
+    animationOpen,
+    setAnimationOpen,
+  ] = useState(
+    false
+  )
+
+
+  useEffect(() => {
+
+    let closeTimer:
+      number |
+      null =
+      null
+
+
+    let frame1:
+      number |
+      null =
+      null
+
+
+    let frame2:
+      number |
+      null =
+      null
+
+
+    if (open) {
+
+      setShouldRender(
+        true
+      )
+
+
+      // 先 render 在下方，
+      // 下一個 frame 再往上滑入。
+      frame1 =
+        window.requestAnimationFrame(
+          () => {
+
+            frame2 =
+              window.requestAnimationFrame(
+                () => {
+
+                  setAnimationOpen(
+                    true
+                  )
+
+                }
+              )
+
+          }
+        )
+
+    } else {
+
+      // 先往下滑出，再真正 unmount。
+      setAnimationOpen(
+        false
+      )
+
+
+      closeTimer =
+        window.setTimeout(
+          () => {
+
+            setShouldRender(
+              false
+            )
+
+          },
+          430
+        )
+
+    }
+
+
+    return () => {
+
+      if (
+        closeTimer !==
+        null
+      ) {
+        window.clearTimeout(
+          closeTimer
+        )
+      }
+
+
+      if (
+        frame1 !==
+        null
+      ) {
+        window.cancelAnimationFrame(
+          frame1
+        )
+      }
+
+
+      if (
+        frame2 !==
+        null
+      ) {
+        window.cancelAnimationFrame(
+          frame2
+        )
+      }
+
+    }
+
+  }, [
+    open,
+  ])
+
+
+  // ==========================================================
   // Canvas Setup
   // ==========================================================
 
@@ -828,7 +963,7 @@ function TravelPact({
   // ==========================================================
 
   if (
-    !open ||
+    !shouldRender ||
     typeof document ===
       'undefined'
   ) {
@@ -861,29 +996,59 @@ function TravelPact({
         event.stopPropagation()
       }}
 
-      className="
+      className={`
         fixed
         inset-0
         z-[1300]
         flex
         items-center
         justify-center
-        bg-slate-950/65
         px-4
         py-[calc(16px+env(safe-area-inset-top))]
-        backdrop-blur-[4px]
-      "
+        transition-[background-color,backdrop-filter]
+        duration-[360ms]
+        ease-out
+
+        ${
+          animationOpen
+            ? `
+                bg-slate-950/65
+                backdrop-blur-[4px]
+              `
+            : `
+                bg-slate-950/0
+                backdrop-blur-0
+              `
+        }
+      `}
     >
 
       <div
-        className="
+        className={`
           relative
           flex
           max-h-[92dvh]
           w-full
           max-w-md
           flex-col
-        "
+          will-change-transform
+
+          transition-[transform,opacity]
+          duration-[420ms]
+          ease-[cubic-bezier(0.22,1,0.36,1)]
+
+          ${
+            animationOpen
+              ? `
+                  translate-y-0
+                  opacity-100
+                `
+              : `
+                  translate-y-[110%]
+                  opacity-0
+                `
+          }
+        `}
       >
 
         {/* Top wooden roll */}

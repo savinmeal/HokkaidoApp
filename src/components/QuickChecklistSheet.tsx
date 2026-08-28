@@ -581,6 +581,383 @@ function QuickChecklistSheet({
   )
 
 
+  // ==========================================================
+  // Notebook Open / Close Animation
+  //
+  // shouldRender:
+  //   關閉時先保留在 DOM，播放「合上筆記本」動畫。
+  //
+  // notebookOpen:
+  //   false = 筆記本仍是闔上的
+  //   true  = 封面翻開，顯示目前書籤頁
+  // ==========================================================
+
+  const [
+    shouldRender,
+    setShouldRender,
+  ] = useState(
+    open
+  )
+
+
+  const [
+    bookVisible,
+    setBookVisible,
+  ] = useState(
+    false
+  )
+
+
+  const [
+    notebookOpen,
+    setNotebookOpen,
+  ] = useState(
+    false
+  )
+
+
+
+  // 半透明內頁翻動狀態
+  //
+  // 開啟：
+  //   黃色封面先翻開，半透明頁稍後跟著翻開
+  //
+  // 關閉：
+  //   半透明頁先蓋回來，黃色封面再蓋上
+  const [
+    innerPageOpen,
+    setInnerPageOpen,
+  ] = useState(
+    false
+  )
+
+
+
+  // 書籤切換中的狀態
+  //
+  // true 時：
+  //   先讓透明內頁蓋住目前內容，
+  //   再切換 selectedPageId，
+  //   最後把透明內頁翻開。
+  const [
+    pageSwitching,
+    setPageSwitching,
+  ] = useState(
+    false
+  )
+
+
+
+  // 書籤方向動畫在初始化 / 重設姿態時，
+  // 暫時關閉 transition，避免看到反向補動畫。
+  const [
+    innerPageTransition,
+    setInnerPageTransition,
+  ] = useState(
+    true
+  )
+
+
+
+  const [
+    bookmarkFlipDirection,
+    setBookmarkFlipDirection,
+  ] = useState<
+    'left' |
+    'right' |
+    null
+  >(
+    null
+  )
+
+
+  useEffect(() => {
+
+    let closeTimer:
+      number |
+      null =
+      null
+
+
+    let hideTimer:
+      number |
+      null =
+      null
+
+
+    let openTimer:
+      number |
+      null =
+      null
+
+
+    let innerOpenTimer:
+      number |
+      null =
+      null
+
+
+    let yellowCloseTimer:
+      number |
+      null =
+      null
+
+
+    let frame:
+      number |
+      null =
+      null
+
+
+    let frame2:
+      number |
+      null =
+      null
+
+
+    if (open) {
+
+      setBookmarkFlipDirection(
+        null
+      )
+
+
+      setInnerPageTransition(
+        true
+      )
+
+
+      setShouldRender(
+        true
+      )
+
+
+      // 每次打開先回到闔上的狀態
+      setNotebookOpen(
+        false
+      )
+
+
+      setInnerPageOpen(
+        false
+      )
+
+
+      // Step 1:
+      // 先讓 DOM 真正 render 在畫面下方。
+      //
+      // 使用 double requestAnimationFrame，
+      // 確保瀏覽器已經 paint：
+      // translate-y-[115%]
+      //
+      // 下一個 frame 才切成 translate-y-0，
+      // 這樣進場滑動一定看得到。
+      frame =
+        window.requestAnimationFrame(
+          () => {
+
+            frame2 =
+              window.requestAnimationFrame(
+                () => {
+
+                  setBookVisible(
+                    true
+                  )
+
+
+                  // Step 2:
+                  // 整本書滑到定位後，
+                  // 黃色封面才開始翻開。
+                  openTimer =
+                    window.setTimeout(
+                      () => {
+
+                        setNotebookOpen(
+                          true
+                        )
+
+                      },
+                      560
+                    )
+
+
+                  // Step 3:
+                  // 黃色封面開始翻開後，
+                  // 半透明內頁再接著翻開。
+                  innerOpenTimer =
+                    window.setTimeout(
+                      () => {
+
+                        setInnerPageOpen(
+                          true
+                        )
+
+                      },
+                      760
+                    )
+
+                }
+              )
+
+          }
+        )
+
+    } else {
+
+      setBookmarkFlipDirection(
+        null
+      )
+
+
+      setInnerPageTransition(
+        true
+      )
+
+
+      // ======================================================
+      // CLOSE
+      //
+      // 改成：
+      // 1. 半透明頁先蓋回來
+      // 2. 再蓋黃色封面
+      // 3. 最後整本書淡出
+      // ======================================================
+
+      // Step 1:
+      // 半透明內頁先蓋上
+      setInnerPageOpen(
+        false
+      )
+
+
+      // Step 2:
+      // 透明頁視覺上已接近闔好後，
+      // 黃色封面就接著開始蓋，
+      // 不再等待完整 transition 尾段
+      yellowCloseTimer =
+        window.setTimeout(
+          () => {
+
+            setNotebookOpen(
+              false
+            )
+
+          },
+          290
+        )
+
+
+      // Step 3:
+      // 黃色封面完全闔好後，
+      // 整本筆記本再往畫面下方移出去。
+      hideTimer =
+        window.setTimeout(
+          () => {
+
+            setBookVisible(
+              false
+            )
+
+          },
+          890
+        )
+
+
+      // Step 4:
+      // 整本書滑出畫面後才真正卸載。
+      closeTimer =
+        window.setTimeout(
+          () => {
+
+            setShouldRender(
+              false
+            )
+
+          },
+          1660
+        )
+
+    }
+
+
+    return () => {
+
+      if (
+        closeTimer !==
+        null
+      ) {
+        window.clearTimeout(
+          closeTimer
+        )
+      }
+
+
+      if (
+        hideTimer !==
+        null
+      ) {
+        window.clearTimeout(
+          hideTimer
+        )
+      }
+
+
+      if (
+        openTimer !==
+        null
+      ) {
+        window.clearTimeout(
+          openTimer
+        )
+      }
+
+
+      if (
+        innerOpenTimer !==
+        null
+      ) {
+        window.clearTimeout(
+          innerOpenTimer
+        )
+      }
+
+
+      if (
+        yellowCloseTimer !==
+        null
+      ) {
+        window.clearTimeout(
+          yellowCloseTimer
+        )
+      }
+
+
+      if (
+        frame !==
+        null
+      ) {
+        window.cancelAnimationFrame(
+          frame
+        )
+      }
+
+
+      if (
+        frame2 !==
+        null
+      ) {
+        window.cancelAnimationFrame(
+          frame2
+        )
+      }
+
+    }
+
+  }, [
+    open,
+  ])
+
+
   useEffect(() => {
 
     try {
@@ -630,7 +1007,7 @@ function QuickChecklistSheet({
     )
 
 
-  if (!open) {
+  if (!shouldRender) {
     return null
   }
 
@@ -741,6 +1118,249 @@ function QuickChecklistSheet({
           item =>
             item.id !== id
         )
+    )
+
+  }
+
+
+  // ==========================================================
+  // Bookmark Switch Animation
+  //
+  // 切換不同書籤時：
+  // 1. 透明內頁先蓋回來
+  // 2. 內頁遮住內容後才切換 selectedPageId
+  // 3. 再把透明內頁翻開
+  //
+  // 新增書籤不使用這個動畫。
+  // ==========================================================
+
+  const switchBookmarkPage = (
+    pageId: string
+  ) => {
+
+    if (
+      pageSwitching ||
+      pageId ===
+        book.selectedPageId
+    ) {
+      return
+    }
+
+
+    const currentIndex =
+      book.pages.findIndex(
+        page =>
+          page.id ===
+          book.selectedPageId
+      )
+
+
+    const targetIndex =
+      book.pages.findIndex(
+        page =>
+          page.id ===
+          pageId
+      )
+
+
+    if (
+      currentIndex < 0 ||
+      targetIndex < 0
+    ) {
+      return
+    }
+
+
+    setPageSwitching(
+      true
+    )
+
+
+    // ========================================================
+    // 選擇左邊書籤
+    //
+    // 動畫：
+    // 目前透明頁是打開狀態
+    // → 播放「闔上透明頁」
+    // → 遮住內容後切換資料
+    // → 無動畫重設回打開姿態
+    // ========================================================
+
+    if (
+      targetIndex <
+      currentIndex
+    ) {
+
+      setBookmarkFlipDirection(
+        'left'
+      )
+
+
+      // ------------------------------------------------------
+      // 左側書籤：
+      //
+      // 先切換書籤 / 內容，
+      // 再播放透明頁闔上的動畫。
+      //
+      // 這樣按下左側書籤時，
+      // tab 的 active 狀態會立即改變，
+      // 體感會和右側切換一致。
+      // ------------------------------------------------------
+
+      setBook(
+        current => ({
+          ...current,
+
+          selectedPageId:
+            pageId,
+        })
+      )
+
+
+      setInnerPageTransition(
+        true
+      )
+
+
+      // 下一個 frame 再開始闔頁，
+      // 讓瀏覽器先 render 新書籤狀態。
+      window.requestAnimationFrame(
+        () => {
+
+          setInnerPageOpen(
+            false
+          )
+
+        }
+      )
+
+
+      // 透明頁視覺上已經闔好後，
+      // 提前進入 reset，
+      // 不等待 ease-out 最後那段尾巴。
+      window.setTimeout(
+        () => {
+
+          setInnerPageTransition(
+            false
+          )
+
+
+          setInnerPageOpen(
+            true
+          )
+
+
+          window.requestAnimationFrame(
+            () => {
+
+              window.requestAnimationFrame(
+                () => {
+
+                  setInnerPageTransition(
+                    true
+                  )
+
+
+                  setBookmarkFlipDirection(
+                    null
+                  )
+
+
+                  setPageSwitching(
+                    false
+                  )
+
+                }
+              )
+
+            }
+          )
+
+        },
+        330
+      )
+
+
+      return
+
+    }
+
+
+    // ========================================================
+    // 選擇右邊書籤
+    //
+    // 動畫：
+    // 無動畫先把透明頁放到闔上位置
+    // → 切換資料
+    // → 播放「打開透明頁」
+    // ========================================================
+
+    setBookmarkFlipDirection(
+      'right'
+    )
+
+
+    setInnerPageTransition(
+      false
+    )
+
+
+    // 先無動畫放到「闔上」姿態
+    setInnerPageOpen(
+      false
+    )
+
+
+    // 同時換成右邊書籤的資料
+    setBook(
+      current => ({
+        ...current,
+
+        selectedPageId:
+          pageId,
+      })
+    )
+
+
+    // 等瀏覽器吃到 closed 姿態後，
+    // 再開啟 transition 並播放「打開」
+    window.requestAnimationFrame(
+      () => {
+
+        window.requestAnimationFrame(
+          () => {
+
+            setInnerPageTransition(
+              true
+            )
+
+
+            setInnerPageOpen(
+              true
+            )
+
+
+            window.setTimeout(
+              () => {
+
+                setBookmarkFlipDirection(
+                  null
+                )
+
+
+                setPageSwitching(
+                  false
+                )
+
+              },
+              680
+            )
+
+          }
+        )
+
+      }
     )
 
   }
@@ -978,19 +1598,32 @@ function QuickChecklistSheet({
           onClose
         }
 
-        className="
+        className={`
           absolute
           inset-0
-          bg-slate-950/45
-          backdrop-blur-[3px]
-        "
+          transition-[background-color,backdrop-filter]
+          duration-[420ms]
+          ease-out
+
+          ${
+            bookVisible
+              ? `
+                  bg-slate-950/45
+                  backdrop-blur-[3px]
+                `
+              : `
+                  bg-slate-950/0
+                  backdrop-blur-0
+                `
+          }
+        `}
       />
 
 
       {/* Sheet */}
 
       <section
-        className="
+        className={`
           absolute
           bottom-0
           left-1/2
@@ -1000,27 +1633,256 @@ function QuickChecklistSheet({
           max-w-md
           -translate-x-1/2
           flex-col
-          overflow-hidden
-          rounded-t-[30px]
-          bg-[#eee8dc]
-          px-3
-          pt-3
-          pb-[calc(12px+env(safe-area-inset-bottom))]
-          shadow-2xl
-        "
+          overflow-visible
+          bg-transparent
+          px-0
+          pt-0
+          pb-0
+          will-change-transform
+
+          transition-transform
+          duration-[520ms]
+          ease-[cubic-bezier(0.22,1,0.36,1)]
+
+          ${
+            bookVisible
+              ? `
+                  translate-y-0
+                `
+              : `
+                  translate-y-[115%]
+                `
+          }
+        `}
+        style={{
+          perspective:
+            '1400px',
+        }}
       >
 
+        {/* ====================================================
+            Animated Notebook Cover
+
+            開啟：
+            黃色封面由右往左翻開，露出目前頁面。
+
+            關閉：
+            封面反向合上，接著整本筆記本往下滑出畫面。
+        ==================================================== */}
+
         <div
-          className="
-            mx-auto
-            mb-3
-            h-1.5
-            w-12
-            shrink-0
-            rounded-full
-            bg-stone-300
-          "
+          className={`
+            pointer-events-none
+            absolute
+            inset-0
+            z-[80]
+            overflow-hidden
+            rounded-t-[27px]
+            rounded-b-none
+            border
+            border-amber-900/25
+            bg-gradient-to-br
+            from-[#f5d75f]
+            via-[#e9bd3f]
+            to-[#cf982a]
+            shadow-[0_18px_45px_rgba(66,45,10,0.28)]
+            [backface-visibility:hidden]
+            [transform-style:preserve-3d]
+            [transform-origin:left_center]
+
+            transition-[transform,opacity]
+            duration-[760ms]
+            ease-[cubic-bezier(0.22,1,0.36,1)]
+
+            ${
+              notebookOpen
+                ? `
+                    -rotate-y-[108deg]
+                    opacity-0
+                  `
+                : `
+                    rotate-y-0
+                    opacity-100
+                  `
+            }
+          `}
+        >
+
+          {/* Cover spine */}
+
+          <div
+            className="
+              absolute
+              bottom-0
+              left-0
+              top-0
+              w-12
+              border-r
+              border-amber-950/20
+              bg-amber-800/15
+            "
+          />
+
+
+          {/* Cover title */}
+
+          <div
+            className="
+              absolute
+              inset-0
+              flex
+              items-center
+              justify-center
+              pl-10
+            "
+          >
+
+            <div
+              className="
+                -rotate-2
+                text-center
+              "
+            >
+
+              <p
+                className="
+                  text-[10px]
+                  font-bold
+                  tracking-[0.26em]
+                  text-amber-950/45
+                "
+              >
+                TRAVEL NOTE
+              </p>
+
+
+              <p
+                className="
+                  mt-2
+                  text-[26px]
+                  font-black
+                  tracking-[0.06em]
+                  text-amber-950/70
+                "
+              >
+                確認清單
+              </p>
+
+
+              <div
+                className="
+                  mx-auto
+                  mt-4
+                  h-1
+                  w-16
+                  rounded-full
+                  bg-red-500/70
+                "
+              />
+
+            </div>
+
+          </div>
+
+
+          {/* Faux metal rings on closed cover */}
+
+          <div
+            className="
+              absolute
+              bottom-6
+              left-[-8px]
+              top-6
+              flex
+              w-12
+              flex-col
+              items-center
+              justify-around
+            "
+          >
+
+            {Array.from({
+              length:
+                7,
+            }).map(
+              (
+                _,
+                index
+              ) => (
+
+                <span
+                  key={
+                    index
+                  }
+                  className="
+                    block
+                    h-3
+                    w-8
+                    rounded-full
+                    border-[3px]
+                    border-slate-400
+                    bg-transparent
+                    shadow-[inset_0_0_0_1px_rgba(255,255,255,0.55)]
+                  "
+                />
+
+              )
+            )}
+
+          </div>
+
+        </div>
+
+
+        {/* A page-turn highlight after the cover opens */}
+
+        <div
+          className={`
+            pointer-events-none
+            absolute
+            inset-y-0
+            right-0
+            z-[70]
+            w-[50%]
+            origin-left
+            rounded-tr-[26px]
+            bg-gradient-to-l
+            from-yellow-50/75
+            via-yellow-100/35
+            to-transparent
+
+            ${
+              innerPageTransition
+                ? `
+                    transition-[transform,opacity]
+                    ${
+                      bookmarkFlipDirection ===
+                      'left'
+                        ? 'duration-[430ms]'
+                        : 'duration-[680ms]'
+                    }
+                    ease-[cubic-bezier(0.22,1,0.36,1)]
+                  `
+                : `
+                    transition-none
+                  `
+            }
+
+            ${
+              innerPageOpen
+                ? `
+                    rotate-y-[-92deg]
+                    opacity-0
+                  `
+                : `
+                    rotate-y-0
+                    opacity-70
+                  `
+            }
+          `}
         />
+
+
 
 
         {/* ====================================================
@@ -1038,8 +1900,8 @@ function QuickChecklistSheet({
             gap-1.5
             overflow-x-auto
             overflow-y-hidden
-            px-[42px]
-            pr-3
+            px-[44px]
+            pr-2
             [scrollbar-width:none]
             [&::-webkit-scrollbar]:hidden
           "
@@ -1069,14 +1931,13 @@ function QuickChecklistSheet({
                   type="button"
 
                   onClick={() =>
-                    setBook(
-                      current => ({
-                        ...current,
-
-                        selectedPageId:
-                          page.id,
-                      })
+                    switchBookmarkPage(
+                      page.id
                     )
+                  }
+
+                  disabled={
+                    pageSwitching
                   }
 
                   className={`
@@ -1092,6 +1953,7 @@ function QuickChecklistSheet({
                     shadow-sm
                     transition-all
                     duration-200
+                    disabled:cursor-default
                     ${color.tabClass}
 
                     ${
@@ -1180,11 +2042,13 @@ function QuickChecklistSheet({
             flex-1
             flex-col
             overflow-hidden
-            rounded-[24px]
-            border
+            rounded-t-[26px]
+            rounded-b-none
+            border-x
+            border-t
             border-amber-900/20
             bg-[#f4dc7b]
-            shadow-[0_16px_40px_rgba(80,60,20,0.18)]
+            shadow-[0_-10px_40px_rgba(80,60,20,0.18)]
           "
         >
 
@@ -1627,7 +2491,7 @@ function QuickChecklistSheet({
                 border-t
                 border-amber-900/15
                 bg-[#f4dc7b]/95
-                pb-4
+                pb-[calc(16px+env(safe-area-inset-bottom))]
                 pt-3
                 backdrop-blur-[2px]
               "
