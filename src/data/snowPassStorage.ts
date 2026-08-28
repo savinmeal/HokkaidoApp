@@ -1,12 +1,22 @@
 // ============================================================
-// Snow Pass Storage
+// Snow Pass / Ticket Storage
 // ============================================================
+
+export type TicketType =
+  | 'ski'
+  | 'train'
+  | 'flight'
+
 
 export type SnowPassRecord = {
   id: string
   name: string
   photoId: string
   createdAt: number
+
+  // Optional for backward compatibility.
+  // Older records without this field are treated as ski tickets.
+  ticketType?: TicketType
 }
 
 
@@ -141,16 +151,31 @@ export function loadSnowPasses():
         SnowPassRecord[]
 
 
-    return Array.isArray(
-      parsed
+    if (
+      !Array.isArray(
+        parsed
+      )
+    ) {
+      return []
+    }
+
+
+    // Backward compatibility:
+    // all old records are ski tickets.
+    return parsed.map(
+      record => ({
+        ...record,
+
+        ticketType:
+          record.ticketType ??
+          'ski',
+      })
     )
-      ? parsed
-      : []
 
   } catch (error) {
 
     console.error(
-      'Snow pass load failed:',
+      'Ticket load failed:',
       error
     )
 
@@ -179,7 +204,7 @@ export function saveSnowPasses(
   } catch (error) {
 
     console.error(
-      'Snow pass metadata save failed:',
+      'Ticket metadata save failed:',
       error
     )
 
@@ -387,15 +412,20 @@ export async function deleteSnowPassPhoto(
 
 export function createSnowPassRecord(
   name: string,
-  photoId: string
+  photoId: string,
+  ticketType:
+    TicketType =
+      'ski'
 ):
   SnowPassRecord {
 
   return {
     id:
       createId(
-        'snow-pass'
+        'ticket'
       ),
+
+    ticketType,
 
     name:
       name.trim(),

@@ -19,6 +19,7 @@ import {
   saveSnowPasses,
   saveSnowPassPhoto,
   type SnowPassRecord,
+  type TicketType,
 } from '../data/snowPassStorage'
 
 
@@ -128,14 +129,78 @@ function useSnowPassPhotoUrl(
 
 
 // ============================================================
-// Pass Slide
+// Ticket Helpers
 // ============================================================
 
-function SnowPassSlide({
+function getTicketType(
+  record:
+    SnowPassRecord
+):
+  TicketType {
+
+  return (
+    record.ticketType ??
+    'ski'
+  )
+
+}
+
+
+function getSerial(
+  record:
+    SnowPassRecord
+) {
+
+  return (
+    record.id
+      .replace(
+        /[^a-zA-Z0-9]/g,
+        ''
+      )
+      .slice(-6)
+      .toUpperCase()
+      .padStart(
+        6,
+        '0'
+      )
+  )
+
+}
+
+
+// ============================================================
+// Clickable Ticket Photo
+// ============================================================
+
+function TicketPhoto({
   record,
+  heightClass =
+    'h-[160px]',
+  frameClass =
+    '',
+  imageClass =
+    '',
+  onOpenImage,
 }: {
   record:
     SnowPassRecord
+
+  heightClass?:
+    string
+
+  frameClass?:
+    string
+
+  imageClass?:
+    string
+
+  onOpenImage:
+    (
+      url:
+        string,
+      name:
+        string
+    ) => void
 }) {
 
   const url =
@@ -145,17 +210,46 @@ function SnowPassSlide({
 
 
   return (
-    <div
-      className="
+
+    <button
+      type="button"
+
+      onPointerDown={event => {
+        // 圖片本身是點擊展開區域，
+        // 不觸發外層長按編輯。
+        event.stopPropagation()
+      }}
+
+      onPointerUp={event => {
+        event.stopPropagation()
+      }}
+
+      onClick={event => {
+
+        event.stopPropagation()
+
+
+        if (url) {
+
+          onOpenImage(
+            url,
+            record.name
+          )
+
+        }
+
+      }}
+
+      className={`
+        relative
         flex
-        h-[235px]
+        ${heightClass}
         w-full
         items-center
         justify-center
-        rounded-[22px]
-        bg-white
-        p-3
-      "
+        overflow-hidden
+        ${frameClass}
+      `}
     >
 
       {url
@@ -164,31 +258,1503 @@ function SnowPassSlide({
             src={
               url
             }
+
             alt={
               record.name
             }
+
             draggable={false}
-            className="
+
+            className={`
               h-full
               w-full
               select-none
               object-contain
-            "
+              ${imageClass}
+            `}
           />
         )
         : (
           <p
             className="
-              text-[11px]
-              text-slate-400
+              text-[10px]
+              font-medium
+              tracking-[0.08em]
+              text-[#7d7969]
             "
           >
-            讀取雪票中...
+            読み込み中...
           </p>
         )
       }
 
+
+      {/* Expand hint */}
+
+      {url && (
+
+        <span
+          className="
+            pointer-events-none
+            absolute
+            bottom-2
+            right-2
+            flex
+            h-7
+            w-7
+            items-center
+            justify-center
+            rounded-full
+            border
+            border-black/10
+            bg-white/85
+            text-[13px]
+            text-slate-700
+            shadow-sm
+            backdrop-blur
+          "
+        >
+          ↗
+        </span>
+
+      )}
+
+    </button>
+
+  )
+
+}
+
+
+// ============================================================
+// Ski Lift Ticket
+// Japanese paper リフト券
+// ============================================================
+
+function SkiTicketSlide({
+  record,
+  onOpenImage,
+}: {
+  record:
+    SnowPassRecord
+
+  onOpenImage:
+    (
+      url:
+        string,
+      name:
+        string
+    ) => void
+}) {
+
+  const serial =
+    getSerial(
+      record
+    )
+
+
+  return (
+
+    <div
+      className="
+        relative
+        mx-auto
+        h-[302px]
+        w-[calc(100%-6px)]
+        max-w-[345px]
+        overflow-hidden
+        rounded-[4px]
+        border
+        border-[#b8ae91]
+        bg-[#f4efd8]
+        text-[#252820]
+        shadow-[0_10px_24px_rgba(55,48,30,0.16)]
+      "
+
+      style={{
+        backgroundImage:
+          `
+            radial-gradient(
+              circle at 12% 18%,
+              rgba(120,103,68,0.07) 0 0.7px,
+              transparent 0.8px
+            ),
+            radial-gradient(
+              circle at 76% 60%,
+              rgba(120,103,68,0.055) 0 0.7px,
+              transparent 0.8px
+            ),
+            repeating-linear-gradient(
+              0deg,
+              rgba(92,80,55,0.018) 0px,
+              rgba(92,80,55,0.018) 1px,
+              transparent 1px,
+              transparent 5px
+            )
+          `,
+      }}
+    >
+
+      {/* Ticket color header */}
+
+      <div
+        className="
+          absolute
+          inset-x-0
+          top-0
+          h-[52px]
+          bg-[#2d7777]
+        "
+      >
+
+        <div
+          className="
+            absolute
+            inset-y-0
+            right-0
+            w-[78px]
+            bg-[#e86e55]
+          "
+        />
+
+
+        <div
+          className="
+            absolute
+            inset-y-0
+            right-[78px]
+            w-[7px]
+            bg-[#e7bd4f]
+          "
+        />
+
+
+        <svg
+          viewBox="0 0 72 34"
+
+          className="
+            absolute
+            left-3
+            top-[9px]
+            h-[31px]
+            w-[66px]
+            opacity-90
+          "
+
+          aria-hidden="true"
+        >
+
+          <path
+            d="
+              M3 29
+              L22 8
+              L32 19
+              L43 5
+              L68 29
+            "
+            fill="none"
+            stroke="#f7f2dc"
+            strokeWidth="3.2"
+            strokeLinecap="square"
+            strokeLinejoin="miter"
+          />
+
+          <path
+            d="
+              M18 14
+              L22 8
+              L26 13
+            "
+            fill="none"
+            stroke="#f7f2dc"
+            strokeWidth="1.5"
+          />
+
+        </svg>
+
+
+        <div
+          className="
+            absolute
+            left-[84px]
+            top-[9px]
+          "
+        >
+
+          <p
+            className="
+              text-[9px]
+              font-black
+              tracking-[0.16em]
+              text-[#f7f2dc]
+            "
+          >
+            北海道 スキーリフト
+          </p>
+
+          <p
+            className="
+              mt-[3px]
+              text-[7px]
+              font-semibold
+              tracking-[0.2em]
+              text-[#f7f2dc]/70
+            "
+          >
+            HOKKAIDO WINTER PASS
+          </p>
+
+        </div>
+
+
+        <div
+          className="
+            absolute
+            right-[10px]
+            top-[7px]
+            text-right
+            text-[#fff8e7]
+          "
+        >
+
+          <p
+            className="
+              text-[8px]
+              font-bold
+              tracking-[0.12em]
+            "
+          >
+            大人
+          </p>
+
+          <p
+            className="
+              mt-[1px]
+              text-[18px]
+              font-black
+              leading-none
+            "
+          >
+            1日
+          </p>
+
+          <p
+            className="
+              mt-[1px]
+              text-[6px]
+              font-bold
+              tracking-[0.1em]
+              opacity-75
+            "
+          >
+            DAY PASS
+          </p>
+
+        </div>
+
+      </div>
+
+
+      {/* Punch hole */}
+
+      <div
+        className="
+          absolute
+          left-[10px]
+          top-[60px]
+          z-20
+          h-[13px]
+          w-[13px]
+          rounded-full
+          border
+          border-[#b7ad91]
+          bg-[#ddd5ba]
+          shadow-inner
+        "
+      />
+
+
+      {/* Main body */}
+
+      <div
+        className="
+          absolute
+          bottom-0
+          left-0
+          right-[54px]
+          top-[52px]
+          px-[29px]
+          pb-3
+          pt-3
+        "
+      >
+
+        <div
+          className="
+            flex
+            items-start
+            justify-between
+            gap-3
+          "
+        >
+
+          <div
+            className="
+              min-w-0
+            "
+          >
+
+            <p
+              className="
+                text-[7px]
+                font-bold
+                tracking-[0.12em]
+                text-[#6a6759]
+              "
+            >
+              スキーリフト 1日券
+            </p>
+
+            <p
+              className="
+                mt-[2px]
+                truncate
+                text-[13px]
+                font-black
+                tracking-[0.02em]
+                text-[#252820]
+              "
+            >
+              {
+                record.name ||
+                'HOKKAIDO'
+              }
+            </p>
+
+          </div>
+
+
+          <div
+            className="
+              shrink-0
+              border
+              border-[#77705d]
+              px-[7px]
+              py-[4px]
+              text-center
+            "
+          >
+
+            <p
+              className="
+                text-[6px]
+                font-bold
+                tracking-[0.08em]
+                text-[#656153]
+              "
+            >
+              NO.
+            </p>
+
+            <p
+              className="
+                mt-[1px]
+                font-mono
+                text-[8px]
+                font-bold
+                tracking-[0.08em]
+              "
+            >
+              {serial}
+            </p>
+
+          </div>
+
+        </div>
+
+
+        {/* Image takes a larger share of the ticket */}
+
+        <div
+          className="
+            relative
+            mt-[7px]
+          "
+        >
+
+          <TicketPhoto
+            record={
+              record
+            }
+
+            onOpenImage={
+              onOpenImage
+            }
+
+            heightClass="h-[170px]"
+
+            frameClass="
+              border
+              border-[#aaa184]
+              bg-[#fffdf4]
+              p-[5px]
+            "
+
+            imageClass="
+              mix-blend-multiply
+            "
+          />
+
+
+          <span
+            className="
+              pointer-events-none
+              absolute
+              left-[4px]
+              top-[4px]
+              h-[8px]
+              w-[8px]
+              border-l
+              border-t
+              border-[#4d4d43]/55
+            "
+          />
+
+          <span
+            className="
+              pointer-events-none
+              absolute
+              bottom-[4px]
+              right-[4px]
+              h-[8px]
+              w-[8px]
+              border-b
+              border-r
+              border-[#4d4d43]/55
+            "
+          />
+
+        </div>
+
+
+        <div
+          className="
+            mt-[5px]
+            flex
+            items-end
+            justify-between
+            gap-3
+          "
+        >
+
+          <p
+            className="
+              text-[6px]
+              font-semibold
+              leading-[1.45]
+              text-[#777160]
+            "
+          >
+            ※ 本券はご本人様のみ有効
+            <br />
+            ※ 改札時に提示してください
+          </p>
+
+
+          <div
+            className="
+              rotate-[-4deg]
+              border-2
+              border-[#b55a4d]/55
+              px-[7px]
+              py-[3px]
+              text-center
+              text-[#a04e43]/70
+            "
+          >
+
+            <p
+              className="
+                text-[7px]
+                font-black
+                tracking-[0.14em]
+              "
+            >
+              2026
+            </p>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      {/* Perforated stub */}
+
+      <div
+        className="
+          absolute
+          bottom-0
+          right-0
+          top-[52px]
+          w-[54px]
+          border-l
+          border-dashed
+          border-[#8e876f]/70
+          bg-[#ebe2c4]
+        "
+      >
+
+        <div
+          className="
+            absolute
+            -left-[6px]
+            top-[28px]
+            h-[12px]
+            w-[12px]
+            rounded-full
+            bg-white
+          "
+        />
+
+        <div
+          className="
+            absolute
+            -left-[6px]
+            bottom-[28px]
+            h-[12px]
+            w-[12px]
+            rounded-full
+            bg-white
+          "
+        />
+
+
+        <div
+          className="
+            absolute
+            inset-0
+            flex
+            items-center
+            justify-center
+          "
+        >
+
+          <p
+            className="
+              rotate-90
+              whitespace-nowrap
+              text-[8px]
+              font-black
+              tracking-[0.22em]
+              text-[#5e5b50]
+            "
+          >
+            リフト券 · 1 DAY
+          </p>
+
+        </div>
+
+
+        <div
+          className="
+            absolute
+            bottom-3
+            left-1/2
+            -translate-x-1/2
+            font-mono
+            text-[6px]
+            font-bold
+            text-[#777160]
+          "
+        >
+          {serial.slice(-4)}
+        </div>
+
+      </div>
+
     </div>
+
+  )
+
+}
+
+
+// ============================================================
+// JR Green Ticket
+// Inspired by Japanese JR green ticket / 指定席券 styling.
+// ============================================================
+
+function TrainTicketSlide({
+  record,
+  onOpenImage,
+}: {
+  record:
+    SnowPassRecord
+
+  onOpenImage:
+    (
+      url:
+        string,
+      name:
+        string
+    ) => void
+}) {
+
+  const serial =
+    getSerial(
+      record
+    )
+
+
+  return (
+
+    <div
+      className="
+        relative
+        mx-auto
+        h-[302px]
+        w-[calc(100%-6px)]
+        max-w-[345px]
+        overflow-hidden
+        rounded-[3px]
+        border
+        border-[#8fa894]
+        bg-[#dce8d8]
+        text-[#163f2a]
+        shadow-[0_10px_24px_rgba(30,60,40,0.15)]
+      "
+
+      style={{
+        backgroundImage:
+          `
+            repeating-linear-gradient(
+              0deg,
+              rgba(39,89,55,0.025) 0px,
+              rgba(39,89,55,0.025) 1px,
+              transparent 1px,
+              transparent 4px
+            ),
+            repeating-linear-gradient(
+              90deg,
+              rgba(255,255,255,0.08) 0px,
+              rgba(255,255,255,0.08) 1px,
+              transparent 1px,
+              transparent 8px
+            )
+          `,
+      }}
+    >
+
+      {/* JR-like green band */}
+
+      <div
+        className="
+          absolute
+          inset-x-0
+          top-0
+          h-[48px]
+          border-b
+          border-[#22633c]/30
+          bg-[#2f7d4d]
+          text-[#f4f8e9]
+        "
+      >
+
+        <div
+          className="
+            absolute
+            left-4
+            top-[8px]
+          "
+        >
+
+          <p
+            className="
+              text-[8px]
+              font-black
+              tracking-[0.18em]
+            "
+          >
+            JR · GREEN TICKET
+          </p>
+
+          <p
+            className="
+              mt-[2px]
+              text-[15px]
+              font-black
+              tracking-[0.08em]
+            "
+          >
+            グリーン券
+          </p>
+
+        </div>
+
+
+        <div
+          className="
+            pointer-events-none
+            absolute
+            right-[92px]
+            top-1/2
+            -translate-y-1/2
+            text-[26px]
+            font-black
+            tracking-[-0.06em]
+            text-white/18
+            select-none
+          "
+        >
+          JR
+        </div>
+
+
+        <div
+          className="
+            absolute
+            right-3
+            top-[7px]
+            border
+            border-white/45
+            px-2
+            py-[4px]
+            text-center
+          "
+        >
+
+          <p
+            className="
+              text-[6px]
+              font-bold
+              tracking-[0.1em]
+            "
+          >
+            指定席
+          </p>
+
+          <p
+            className="
+              mt-[1px]
+              text-[11px]
+              font-black
+            "
+          >
+            GREEN
+          </p>
+
+        </div>
+
+      </div>
+
+
+      {/* Dot-matrix ticket info */}
+
+      <div
+        className="
+          absolute
+          inset-x-0
+          top-[48px]
+          px-4
+          pt-3
+        "
+      >
+
+        <div
+          className="
+            flex
+            items-start
+            justify-between
+            gap-2
+            font-mono
+          "
+        >
+
+          <div>
+
+            <p
+              className="
+                text-[8px]
+                font-bold
+                tracking-[0.08em]
+                text-[#315a40]
+              "
+            >
+              ご利用区間 / TRAIN
+            </p>
+
+            <p
+              className="
+                mt-[2px]
+                max-w-[230px]
+                truncate
+                text-[15px]
+                font-black
+                tracking-[0.04em]
+                text-[#163f2a]
+              "
+            >
+              {
+                record.name ||
+                'JR HOKKAIDO'
+              }
+            </p>
+
+          </div>
+
+
+          <div
+            className="
+              border
+              border-[#477357]/45
+              bg-[#edf4e7]/60
+              px-2
+              py-1
+              text-center
+            "
+          >
+
+            <p
+              className="
+                text-[6px]
+                font-bold
+              "
+            >
+              券番号
+            </p>
+
+            <p
+              className="
+                mt-[1px]
+                text-[8px]
+                font-black
+              "
+            >
+              {serial}
+            </p>
+
+          </div>
+
+        </div>
+
+
+        {/* Larger uploaded ticket image */}
+
+        <div
+          className="
+            mt-[8px]
+          "
+        >
+
+          <TicketPhoto
+            record={
+              record
+            }
+
+            onOpenImage={
+              onOpenImage
+            }
+
+            heightClass="h-[188px]"
+
+            frameClass="
+              border
+              border-[#73907a]/50
+              bg-[#f4f8ed]
+              p-[5px]
+            "
+          />
+
+        </div>
+
+
+        <div
+          className="
+            mt-[5px]
+            flex
+            items-center
+            justify-between
+            font-mono
+            text-[6px]
+            font-bold
+            text-[#55705b]
+          "
+        >
+
+          <span>
+            JR HOKKAIDO · 指定席券
+          </span>
+
+          <span>
+            自動改札機対応
+          </span>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  )
+
+}
+
+
+// ============================================================
+// Airline Boarding Pass
+// ============================================================
+
+function FlightTicketSlide({
+  record,
+  onOpenImage,
+}: {
+  record:
+    SnowPassRecord
+
+  onOpenImage:
+    (
+      url:
+        string,
+      name:
+        string
+    ) => void
+}) {
+
+  const serial =
+    getSerial(
+      record
+    )
+
+
+  return (
+
+    <div
+      className="
+        relative
+        mx-auto
+        h-[302px]
+        w-[calc(100%-6px)]
+        max-w-[345px]
+        overflow-hidden
+        rounded-[8px]
+        border
+        border-[#bcc7d3]
+        bg-[#f6f8fa]
+        text-[#17283b]
+        shadow-[0_10px_24px_rgba(37,55,75,0.15)]
+      "
+    >
+
+      <div
+        className="
+          absolute
+          inset-x-0
+          top-0
+          h-[50px]
+          bg-[#173f64]
+          text-white
+        "
+      >
+
+        <div
+          className="
+            absolute
+            left-4
+            top-[8px]
+          "
+        >
+
+          <p
+            className="
+              text-[7px]
+              font-bold
+              tracking-[0.18em]
+              text-sky-100/65
+            "
+          >
+            JAPAN DOMESTIC / INTERNATIONAL
+          </p>
+
+          <p
+            className="
+              mt-[2px]
+              text-[15px]
+              font-black
+              tracking-[0.08em]
+            "
+          >
+            BOARDING PASS
+          </p>
+
+        </div>
+
+
+        <div
+          className="
+            pointer-events-none
+            absolute
+            right-[86px]
+            top-1/2
+            -translate-y-1/2
+            text-white/16
+            select-none
+          "
+          aria-hidden="true"
+        >
+          <svg
+            viewBox="0 0 64 64"
+            className="h-[26px] w-[26px]"
+            fill="none"
+          >
+            <path
+              d="
+                M8 35
+                L28 31
+                L49 17
+                C52 15 55 15 56 17
+                C57 19 55 22 52 24
+                L38 34
+                L49 41
+                L46 45
+                L32 39
+                L22 47
+                L18 44
+                L24 37
+                L8 35
+                Z
+              "
+              fill="currentColor"
+            />
+          </svg>
+        </div>
+
+
+        <div
+          className="
+            absolute
+            right-4
+            top-[7px]
+            text-right
+          "
+        >
+
+          <p className="text-[6px] text-white/60">
+            CLASS
+          </p>
+
+          <p className="text-[16px] font-black">
+            Y
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <div
+        className="
+          absolute
+          inset-x-0
+          top-[50px]
+          px-4
+          pt-3
+        "
+      >
+
+        <div
+          className="
+            flex
+            items-start
+            justify-between
+            gap-3
+          "
+        >
+
+          <div className="min-w-0">
+
+            <p
+              className="
+                text-[7px]
+                font-bold
+                tracking-[0.14em]
+                text-slate-500
+              "
+            >
+              PASSENGER / ROUTE
+            </p>
+
+            <p
+              className="
+                mt-[2px]
+                truncate
+                text-[14px]
+                font-black
+                tracking-[0.03em]
+                text-[#17324c]
+              "
+            >
+              {
+                record.name ||
+                'HOKKAIDO FLIGHT'
+              }
+            </p>
+
+          </div>
+
+
+          <div
+            className="
+              shrink-0
+              border-l
+              border-slate-300
+              pl-3
+              text-right
+            "
+          >
+
+            <p className="text-[6px] font-bold text-slate-400">
+              BOOKING
+            </p>
+
+            <p className="mt-[1px] font-mono text-[8px] font-black">
+              {serial}
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div
+          className="
+            mt-[8px]
+          "
+        >
+
+          <TicketPhoto
+            record={
+              record
+            }
+
+            onOpenImage={
+              onOpenImage
+            }
+
+            heightClass="h-[184px]"
+
+            frameClass="
+              border
+              border-slate-300
+              bg-white
+              p-[5px]
+            "
+          />
+
+        </div>
+
+
+        <div
+          className="
+            mt-[5px]
+            flex
+            items-center
+            justify-between
+            text-[6px]
+            font-semibold
+            tracking-[0.1em]
+            text-slate-500
+          "
+        >
+
+          <span>
+            E-TICKET / QR
+          </span>
+
+          <span>
+            BOARDING PASS
+          </span>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  )
+
+}
+
+
+// ============================================================
+// Ticket Slide Router
+// ============================================================
+
+function SnowPassSlide({
+  record,
+  onOpenImage,
+}: {
+  record:
+    SnowPassRecord
+
+  onOpenImage:
+    (
+      url:
+        string,
+      name:
+        string
+    ) => void
+}) {
+
+  const ticketType =
+    getTicketType(
+      record
+    )
+
+
+  if (
+    ticketType ===
+    'train'
+  ) {
+
+    return (
+      <TrainTicketSlide
+        record={
+          record
+        }
+
+        onOpenImage={
+          onOpenImage
+        }
+      />
+    )
+
+  }
+
+
+  if (
+    ticketType ===
+    'flight'
+  ) {
+
+    return (
+      <FlightTicketSlide
+        record={
+          record
+        }
+
+        onOpenImage={
+          onOpenImage
+        }
+      />
+    )
+
+  }
+
+
+  return (
+    <SkiTicketSlide
+      record={
+        record
+      }
+
+      onOpenImage={
+        onOpenImage
+      }
+    />
+  )
+
+}
+
+
+// ============================================================
+// Image Lightbox
+// ============================================================
+
+function TicketImageLightbox({
+  open,
+  url,
+  name,
+  onClose,
+}: {
+  open:
+    boolean
+
+  url:
+    string |
+    null
+
+  name:
+    string
+
+  onClose:
+    () => void
+}) {
+
+  if (
+    !open ||
+    !url ||
+    typeof document ===
+      'undefined'
+  ) {
+    return null
+  }
+
+
+  return createPortal(
+
+    <div
+      data-disable-swipe-back="true"
+
+      className="
+        fixed
+        inset-0
+        z-[1300]
+        flex
+        items-center
+        justify-center
+        bg-slate-950/90
+        px-4
+        py-[calc(18px+env(safe-area-inset-top))]
+        backdrop-blur-md
+      "
+
+      onPointerDown={event => {
+        event.stopPropagation()
+      }}
+    >
+
+      <button
+        type="button"
+
+        aria-label="關閉票券圖片"
+
+        onClick={
+          onClose
+        }
+
+        className="
+          absolute
+          inset-0
+        "
+      />
+
+
+      <div
+        className="
+          relative
+          z-10
+          flex
+          max-h-[88dvh]
+          w-full
+          max-w-md
+          flex-col
+        "
+      >
+
+        <div
+          className="
+            mb-3
+            flex
+            items-center
+            justify-between
+            gap-3
+            px-1
+            text-white
+          "
+        >
+
+          <div className="min-w-0">
+
+            <p
+              className="
+                text-[8px]
+                font-bold
+                tracking-[0.16em]
+                text-white/45
+              "
+            >
+              TICKET IMAGE
+            </p>
+
+            <p
+              className="
+                mt-1
+                truncate
+                text-[14px]
+                font-semibold
+              "
+            >
+              {name}
+            </p>
+
+          </div>
+
+
+          <button
+            type="button"
+
+            onClick={
+              onClose
+            }
+
+            className="
+              flex
+              h-9
+              w-9
+              shrink-0
+              items-center
+              justify-center
+              rounded-full
+              bg-white/10
+              text-[20px]
+              text-white
+            "
+          >
+            ×
+          </button>
+
+        </div>
+
+
+        <div
+          className="
+            min-h-0
+            flex-1
+            overflow-auto
+            rounded-[18px]
+            bg-white
+            p-2
+          "
+        >
+
+          <img
+            src={
+              url
+            }
+
+            alt={
+              name
+            }
+
+            draggable={false}
+
+            className="
+              mx-auto
+              max-h-[80dvh]
+              w-auto
+              max-w-full
+              object-contain
+            "
+          />
+
+        </div>
+
+      </div>
+
+    </div>,
+    document.body
   )
 
 }
@@ -197,6 +1763,7 @@ function SnowPassSlide({
 // ============================================================
 // Editor Sheet
 // ============================================================
+
 
 type SnowPassEditorProps = {
   open:
@@ -211,7 +1778,10 @@ type SnowPassEditorProps = {
 
   onSave:
     (
-      name: string,
+      ticketType:
+        TicketType,
+      name:
+        string,
       file:
         File |
         null
@@ -233,6 +1803,14 @@ function SnowPassEditor({
   onDelete,
   onClose,
 }: SnowPassEditorProps) {
+
+  const [
+    ticketType,
+    setTicketType,
+  ] = useState<TicketType>(
+    'ski'
+  )
+
 
   const [
     name,
@@ -279,6 +1857,12 @@ function SnowPassEditor({
     if (!open) {
       return
     }
+
+
+    setTicketType(
+      record?.ticketType ??
+      'ski'
+    )
 
 
     setName(
@@ -380,7 +1964,7 @@ function SnowPassEditor({
 
       <button
         type="button"
-        aria-label="關閉雪票編輯"
+        aria-label="關閉票券編輯"
         onClick={
           onClose
         }
@@ -438,7 +2022,7 @@ function SnowPassEditor({
                 text-slate-500
               "
             >
-              SNOW PASS
+              TICKET WALLET
             </p>
 
 
@@ -453,8 +2037,8 @@ function SnowPassEditor({
             >
               {
                 mode === 'create'
-                  ? '新增雪票'
-                  : '編輯雪票'
+                  ? '新增票券'
+                  : '編輯票券'
               }
             </h2>
 
@@ -484,6 +2068,200 @@ function SnowPassEditor({
         </div>
 
 
+        {/* Ticket type selector */}
+
+        <div
+          className="
+            mt-4
+            rounded-[12px]
+            border
+            border-slate-200
+            bg-slate-100/80
+            px-3
+            py-2.5
+          "
+        >
+
+          <p
+            className="
+              text-[9px]
+              font-medium
+              leading-5
+              text-slate-500
+            "
+          >
+            提示：建立完成後，長按票券即可進入編輯。
+          </p>
+
+        </div>
+
+
+        <div
+          className="
+            mt-5
+          "
+        >
+
+          <p
+            className="
+              text-[10px]
+              font-semibold
+              tracking-[0.1em]
+              text-slate-600
+            "
+          >
+            TICKET TYPE
+          </p>
+
+
+          <div
+            className="
+              mt-2
+              grid
+              grid-cols-3
+              gap-2
+            "
+          >
+
+            {(
+              [
+                {
+                  id:
+                    'ski',
+
+                  label:
+                    '雪票',
+
+                  sub:
+                    'リフト券',
+
+                  icon:
+                    '⛷',
+                },
+                {
+                  id:
+                    'train',
+
+                  label:
+                    '車票',
+
+                  sub:
+                    'JR 券',
+
+                  icon:
+                    '🚆',
+                },
+                {
+                  id:
+                    'flight',
+
+                  label:
+                    '機票',
+
+                  sub:
+                    'BOARDING',
+
+                  icon:
+                    '✈',
+                },
+              ] as const
+            ).map(
+              item => {
+
+                const selected =
+                  ticketType ===
+                  item.id
+
+
+                return (
+
+                  <button
+                    key={
+                      item.id
+                    }
+
+                    type="button"
+
+                    onClick={() =>
+                      setTicketType(
+                        item.id
+                      )
+                    }
+
+                    className={`
+                      rounded-[15px]
+                      border
+                      px-2
+                      py-3
+                      text-center
+                      transition
+                      active:scale-[0.98]
+
+                      ${
+                        selected
+                          ? `
+                              border-slate-900
+                              bg-slate-900
+                              text-white
+                              shadow-sm
+                            `
+                          : `
+                              border-slate-200
+                              bg-white
+                              text-slate-700
+                            `
+                      }
+                    `}
+                  >
+
+                    <div
+                      className="
+                        text-[18px]
+                        leading-none
+                      "
+                    >
+                      {item.icon}
+                    </div>
+
+                    <p
+                      className="
+                        mt-2
+                        text-[11px]
+                        font-bold
+                      "
+                    >
+                      {item.label}
+                    </p>
+
+                    <p
+                      className={`
+                        mt-1
+                        text-[7px]
+                        font-semibold
+                        tracking-[0.08em]
+
+                        ${
+                          selected
+                            ? 'text-white/55'
+                            : 'text-slate-400'
+                        }
+                      `}
+                    >
+                      {item.sub}
+                    </p>
+
+                  </button>
+
+                )
+
+              }
+            )}
+
+          </div>
+
+        </div>
+
+
         <label
           className="
             mt-5
@@ -508,7 +2286,15 @@ function SnowPassEditor({
             value={
               name
             }
-            placeholder="例如：FURANO / JEFF"
+            placeholder={
+              ticketType ===
+                'train'
+                ? '例如：札幌 → 旭川 / JR HOKKAIDO'
+                : ticketType ===
+                  'flight'
+                ? '例如：TPE → CTS / BR116'
+                : '例如：FURANO / NISEKO'
+            }
             onChange={event =>
               setName(
                 event.target.value
@@ -561,7 +2347,13 @@ function SnowPassEditor({
           >
             {
               mode === 'edit'
-                ? '重新選擇雪票照片'
+                ? '重新選擇票券圖片'
+                : ticketType ===
+                  'train'
+                ? '選擇 JR 車票圖片'
+                : ticketType ===
+                  'flight'
+                ? '選擇機票 / Boarding Pass 圖片'
                 : '選擇雪票照片'
             }
           </button>
@@ -616,7 +2408,7 @@ function SnowPassEditor({
                 src={
                   previewUrl
                 }
-                alt="雪票預覽"
+                alt="票券預覽"
                 className="
                   h-full
                   w-full
@@ -645,6 +2437,7 @@ function SnowPassEditor({
 
 
             void onSave(
+              ticketType,
               name,
               file
             )
@@ -705,7 +2498,7 @@ function SnowPassEditor({
                 text-red-500
               "
             >
-              刪除此雪票
+              刪除此票券
             </button>
 
           )
@@ -757,6 +2550,23 @@ function SnowPassWallet() {
   >(
     'create'
   )
+
+
+  const [
+    lightboxUrl,
+    setLightboxUrl,
+  ] = useState<
+    string |
+    null
+  >(
+    null
+  )
+
+
+  const [
+    lightboxName,
+    setLightboxName,
+  ] = useState('')
 
 
   const scrollerRef =
@@ -818,6 +2628,25 @@ function SnowPassWallet() {
     records,
     selectedIndex,
   ])
+
+
+  const openTicketImage = (
+    url:
+      string,
+
+    name:
+      string
+  ) => {
+
+    setLightboxUrl(
+      url
+    )
+
+    setLightboxName(
+      name
+    )
+
+  }
 
 
   const clearLongPress =
@@ -1034,7 +2863,10 @@ function SnowPassWallet() {
 
   const saveEditor =
     async (
-      name: string,
+      ticketType:
+        TicketType,
+      name:
+        string,
       file:
         File |
         null
@@ -1059,7 +2891,8 @@ function SnowPassWallet() {
         const next =
           createSnowPassRecord(
             name,
-            photoId
+            photoId,
+            ticketType
           )
 
 
@@ -1136,6 +2969,8 @@ function SnowPassWallet() {
                   ? {
                       ...item,
 
+                      ticketType,
+
                       name:
                         name.trim(),
 
@@ -1166,7 +3001,7 @@ function SnowPassWallet() {
 
       const confirmed =
         window.confirm(
-          `確定要刪除「${current.name}」嗎？`
+          `確定要刪除票券「${current.name}」嗎？`
         )
 
 
@@ -1218,22 +3053,41 @@ function SnowPassWallet() {
 
       <div
         className="
+          relative
           overflow-hidden
-          rounded-[28px]
-          bg-slate-950
-          px-4
-          pb-4
-          pt-4
-          text-white
-          shadow-xl
-          shadow-slate-900/15
+          rounded-[20px]
+          border
+          border-[#c7bfa5]
+          bg-[#eee6cf]
+          px-3
+          pb-3
+          pt-3
+          text-[#292b24]
+          shadow-[0_10px_28px_rgba(69,60,39,0.12)]
         "
+
+        style={{
+          backgroundImage:
+            `
+              repeating-linear-gradient(
+                0deg,
+                rgba(98,83,49,0.018) 0px,
+                rgba(98,83,49,0.018) 1px,
+                transparent 1px,
+                transparent 6px
+              )
+            `,
+        }}
       >
+
+        {/* ==================================================
+            Header / ticket office style
+        ================================================== */}
 
         <div
           className="
             flex
-            items-center
+            items-start
             justify-between
             gap-4
             px-1
@@ -1241,120 +3095,226 @@ function SnowPassWallet() {
         >
 
           <div>
-            <p
+
+            <div
               className="
-                text-[9px]
-                font-semibold
-                tracking-[0.18em]
-                text-white/55
+                flex
+                items-center
+                gap-2
               "
             >
-              SNOW PASS
-            </p>
+
+              <span
+                className="
+                  inline-block
+                  h-[7px]
+                  w-[7px]
+                  rounded-full
+                  bg-[#cf604e]
+                "
+              />
+
+              <p
+                className="
+                  text-[8px]
+                  font-black
+                  tracking-[0.16em]
+                  text-[#5f5c50]
+                "
+              >
+                TRAVEL TICKETS
+              </p>
+
+            </div>
+
 
             <p
               className="
-                mt-1
-                text-[13px]
-                font-medium
-                text-white/85
+                mt-[3px]
+                text-[15px]
+                font-black
+                tracking-[0.06em]
+                text-[#292b24]
               "
             >
-              快速雪票
+              快速票券
             </p>
+
+
+            <p
+              className="
+                mt-[2px]
+                text-[7px]
+                font-semibold
+                tracking-[0.16em]
+                text-[#777160]
+              "
+            >
+              QUICK TICKET WALLET
+            </p>
+
           </div>
 
 
           <button
             type="button"
+
             onClick={
               openCreate
             }
+
             className="
               flex
-              h-9
+              h-[34px]
               items-center
-              gap-1.5
-              rounded-full
+              gap-1
               border
-              border-white/15
-              bg-white/8
-              px-3
-              text-[9px]
-              font-semibold
+              border-[#8b836d]
+              bg-[#f8f3df]
+              px-[11px]
+              text-[8px]
+              font-black
               tracking-[0.08em]
-              text-white/80
+              text-[#4d4c43]
+              shadow-[2px_2px_0_rgba(94,82,56,0.10)]
+              transition
+              active:translate-y-px
             "
           >
-            ＋ ADD
+            ＋ 追加
           </button>
 
         </div>
+
+
+        <div
+          className="
+            mx-1
+            mt-3
+            border-t
+            border-dashed
+            border-[#9b927a]/70
+          "
+        />
 
 
         {records.length === 0
           ? (
             <button
               type="button"
+
               onClick={
                 openCreate
               }
+
               className="
-                mt-4
+                relative
+                mt-3
                 flex
-                h-[190px]
+                h-[214px]
                 w-full
                 flex-col
                 items-center
                 justify-center
-                rounded-[22px]
+                overflow-hidden
                 border
-                border-dashed
-                border-white/20
-                bg-white/5
+                border-[#b9af91]
+                bg-[#f6efd8]
                 text-center
+                shadow-inner
               "
             >
+
+              {/* Blank-ticket color strip */}
+
               <div
                 className="
+                  absolute
+                  inset-x-0
+                  top-0
+                  h-[34px]
+                  bg-[#2d7777]
+                "
+              >
+
+                <div
+                  className="
+                    absolute
+                    right-0
+                    top-0
+                    h-full
+                    w-[72px]
+                    bg-[#e86e55]
+                  "
+                />
+
+              </div>
+
+
+              <div
+                className="
+                  mt-5
                   flex
-                  h-10
-                  w-10
+                  h-11
+                  w-11
                   items-center
                   justify-center
                   rounded-full
-                  bg-white/8
-                  text-[22px]
-                  text-white/70
+                  border
+                  border-[#a69c7f]
+                  bg-[#ede4c9]
+                  text-[24px]
+                  font-light
+                  text-[#666153]
                 "
               >
                 ＋
               </div>
 
+
               <p
                 className="
                   mt-3
-                  text-[11px]
-                  font-medium
-                  text-white/75
+                  text-[12px]
+                  font-black
+                  tracking-[0.04em]
+                  text-[#393a33]
                 "
               >
-                上傳雪票條碼 / QR 圖片
+                票券を追加
               </p>
+
 
               <p
                 className="
                   mt-1
                   text-[9px]
-                  text-white/45
+                  font-medium
+                  text-[#777160]
                 "
               >
-                可輸入名稱或代號
+                加入雪票 / JR 車票 / 機票
               </p>
+
+
+              <div
+                className="
+                  absolute
+                  bottom-4
+                  text-[7px]
+                  font-semibold
+                  tracking-[0.16em]
+                  text-[#989079]
+                "
+              >
+                HOKKAIDO · 2026
+              </div>
+
             </button>
           )
           : (
             <>
+
               <div
                 ref={
                   scrollerRef
@@ -1387,7 +3347,7 @@ function SnowPassWallet() {
                 }
 
                 className="
-                  mt-4
+                  mt-3
                   flex
                   touch-pan-x
                   snap-x
@@ -1407,14 +3367,21 @@ function SnowPassWallet() {
                       key={
                         record.id
                       }
+
                       className="
                         min-w-full
                         snap-center
+                        px-[1px]
+                        py-1
                       "
                     >
                       <SnowPassSlide
                         record={
                           record
+                        }
+
+                        onOpenImage={
+                          openTicketImage
                         }
                       />
                     </div>
@@ -1425,14 +3392,20 @@ function SnowPassWallet() {
               </div>
 
 
+              {/* Ticket wallet footer */}
+
               <div
                 className="
-                  mt-3
+                  mt-2
                   flex
                   items-center
                   justify-between
                   gap-3
+                  border-t
+                  border-dashed
+                  border-[#9b927a]/65
                   px-1
+                  pt-2
                 "
               >
 
@@ -1441,12 +3414,14 @@ function SnowPassWallet() {
                     min-w-0
                   "
                 >
+
                   <p
                     className="
                       truncate
-                      text-[12px]
-                      font-semibold
-                      text-white/90
+                      text-[11px]
+                      font-black
+                      tracking-[0.04em]
+                      text-[#383930]
                     "
                   >
                     {
@@ -1455,12 +3430,14 @@ function SnowPassWallet() {
                     }
                   </p>
 
+
                   <p
                     className="
-                      mt-1
-                      text-[8px]
+                      mt-[2px]
+                      text-[7px]
+                      font-semibold
                       tracking-[0.1em]
-                      text-white/45
+                      text-[#827b68]
                     "
                   >
                     {
@@ -1469,17 +3446,20 @@ function SnowPassWallet() {
                       records.length
                     }
                     {' · '}
-                    長按編輯
+                    長押しで編集
                   </p>
+
                 </div>
 
 
                 <div
                   className="
                     flex
-                    gap-1
+                    items-center
+                    gap-[5px]
                   "
                 >
+
                   {records.map(
                     record => (
 
@@ -1487,30 +3467,69 @@ function SnowPassWallet() {
                         key={
                           record.id
                         }
+
                         className={`
-                          h-1.5
+                          h-[5px]
                           rounded-full
-                          transition
+                          transition-all
+                          duration-300
 
                           ${
                             record.id ===
                             current?.id
-                              ? 'w-5 bg-white/80'
-                              : 'w-1.5 bg-white/25'
+                              ? `
+                                  w-[18px]
+                                  bg-[#2d7777]
+                                `
+                              : `
+                                  w-[5px]
+                                  bg-[#a69d83]
+                                `
                           }
                         `}
                       />
 
                     )
                   )}
+
                 </div>
 
               </div>
+
             </>
           )
         }
 
       </div>
+
+
+      <TicketImageLightbox
+        open={
+          Boolean(
+            lightboxUrl
+          )
+        }
+
+        url={
+          lightboxUrl
+        }
+
+        name={
+          lightboxName
+        }
+
+        onClose={() => {
+
+          setLightboxUrl(
+            null
+          )
+
+          setLightboxName(
+            ''
+          )
+
+        }}
+      />
 
 
       <SnowPassEditor
