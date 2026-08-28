@@ -254,6 +254,12 @@ function TravelPact({
       null
 
 
+    let openStartTimer:
+      number |
+      null =
+      null
+
+
     let frame1:
       number |
       null =
@@ -268,39 +274,56 @@ function TravelPact({
 
     if (open) {
 
-      setShouldRender(
-        true
-      )
-
-
-      // 先 render 在下方，
-      // 下一個 frame 再往上滑入。
-      frame1 =
-        window.requestAnimationFrame(
-          () => {
-
-            frame2 =
-              window.requestAnimationFrame(
-                () => {
-
-                  setAnimationOpen(
-                    true
-                  )
-
-                }
-              )
-
-          }
-        )
-
-    } else {
-
-      // 先往下滑出，再真正 unmount。
+      // 先確保卷軸真的 render 在畫面下方。
       setAnimationOpen(
         false
       )
 
 
+      setShouldRender(
+        true
+      )
+
+
+      // 這裡不用只依賴 RAF。
+      // 保留一個很短、肉眼幾乎感覺不到的起始停留，
+      // 讓瀏覽器一定先 paint「卷軸在畫面下方」，
+      // 再開始往上滑。
+      openStartTimer =
+        window.setTimeout(
+          () => {
+
+            frame1 =
+              window.requestAnimationFrame(
+                () => {
+
+                  frame2 =
+                    window.requestAnimationFrame(
+                      () => {
+
+                        setAnimationOpen(
+                          true
+                        )
+
+                      }
+                    )
+
+                }
+              )
+
+          },
+          70
+        )
+
+    } else {
+
+      // 關閉時整卷直接往畫面下方滑出。
+      setAnimationOpen(
+        false
+      )
+
+
+      // 滑出完成後才真正 unmount。
       closeTimer =
         window.setTimeout(
           () => {
@@ -310,7 +333,7 @@ function TravelPact({
             )
 
           },
-          430
+          560
         )
 
     }
@@ -324,6 +347,16 @@ function TravelPact({
       ) {
         window.clearTimeout(
           closeTimer
+        )
+      }
+
+
+      if (
+        openStartTimer !==
+        null
+      ) {
+        window.clearTimeout(
+          openStartTimer
         )
       }
 
@@ -417,14 +450,10 @@ function TravelPact({
         }
 
 
-        context.setTransform(
-          dpr,
-          0,
-          0,
-          dpr,
-          0,
-          0
-        )
+        // 直接在 canvas backing-store pixel 座標繪圖。
+        // 不再使用 context.setTransform(dpr, ...)，
+        // 避免簽名區高度改變後 CSS / Canvas 座標比例不同步。
+        context.resetTransform()
 
 
         context.lineCap =
@@ -434,7 +463,8 @@ function TravelPact({
           'round'
 
         context.lineWidth =
-          2.2
+          2.2 *
+          dpr
 
         context.strokeStyle =
           '#292524'
@@ -455,12 +485,50 @@ function TravelPact({
           image.onload =
             () => {
 
+              // 舊版簽名可能是在較矮的 145px 區塊保存。
+              // 以 contain 方式放回新 Canvas，避免直接把 Y 軸拉成 2 倍。
+              const scale =
+                Math.min(
+                  canvas.width /
+                    image.naturalWidth,
+
+                  canvas.height /
+                    image.naturalHeight
+                )
+
+
+              const drawWidth =
+                image.naturalWidth *
+                scale
+
+
+              const drawHeight =
+                image.naturalHeight *
+                scale
+
+
+              const drawX =
+                (
+                  canvas.width -
+                  drawWidth
+                ) /
+                2
+
+
+              const drawY =
+                (
+                  canvas.height -
+                  drawHeight
+                ) /
+                2
+
+
               context.drawImage(
                 image,
-                0,
-                0,
-                rect.width,
-                rect.height
+                drawX,
+                drawY,
+                drawWidth,
+                drawHeight
               )
 
 
@@ -566,14 +634,34 @@ function TravelPact({
       canvas.getBoundingClientRect()
 
 
+    const scaleX =
+      rect.width > 0
+        ? canvas.width /
+          rect.width
+        : 1
+
+
+    const scaleY =
+      rect.height > 0
+        ? canvas.height /
+          rect.height
+        : 1
+
+
     return {
       x:
-        event.clientX -
-        rect.left,
+        (
+          event.clientX -
+          rect.left
+        ) *
+        scaleX,
 
       y:
-        event.clientY -
-        rect.top,
+        (
+          event.clientY -
+          rect.top
+        ) *
+        scaleY,
     }
 
   }
@@ -996,59 +1084,74 @@ function TravelPact({
         event.stopPropagation()
       }}
 
-      className={`
+      className="
         fixed
         inset-0
         z-[1300]
         flex
         items-center
         justify-center
+        overflow-hidden
         px-4
         py-[calc(16px+env(safe-area-inset-top))]
-        transition-[background-color,backdrop-filter]
-        duration-[360ms]
-        ease-out
-
-        ${
-          animationOpen
-            ? `
-                bg-slate-950/65
-                backdrop-blur-[4px]
-              `
-            : `
-                bg-slate-950/0
-                backdrop-blur-0
-              `
-        }
-      `}
+      "
     >
 
-      <div
+      {/* Clickable area outside the scroll */}
+
+      <button
+        type="button"
+
+        aria-label="關閉旅行履行契約"
+
+        onClick={
+          onClose
+        }
+
         className={`
+          absolute
+          inset-0
+          z-0
+          transition-[background-color,backdrop-filter]
+          duration-[360ms]
+          ease-out
+
+          ${
+            animationOpen
+              ? `
+                  bg-slate-950/65
+                  backdrop-blur-[4px]
+                `
+              : `
+                  bg-slate-950/0
+                  backdrop-blur-0
+                `
+          }
+        `}
+      />
+
+
+      <div
+        className="
           relative
+          z-10
           flex
           max-h-[92dvh]
           w-full
           max-w-md
           flex-col
           will-change-transform
+        "
 
-          transition-[transform,opacity]
-          duration-[420ms]
-          ease-[cubic-bezier(0.22,1,0.36,1)]
-
-          ${
+        style={{
+          transform:
             animationOpen
-              ? `
-                  translate-y-0
-                  opacity-100
-                `
-              : `
-                  translate-y-[110%]
-                  opacity-0
-                `
-          }
-        `}
+              ? 'translate3d(0, 0, 0)'
+              : 'translate3d(0, 110vh, 0)',
+
+          transition:
+            'transform 520ms cubic-bezier(0.22, 1, 0.36, 1)',
+        }}
       >
 
         {/* Top wooden roll */}
@@ -1057,47 +1160,172 @@ function TravelPact({
           className="
             relative
             z-20
-            mx-3
-            h-7
+            mx-2
+            h-8
             rounded-full
             border
-            border-amber-950/20
+            border-amber-950/35
             bg-gradient-to-b
-            from-amber-600
-            via-amber-800
-            to-amber-950
-            shadow-xl
+            from-[#b86d2b]
+            via-[#7b3f18]
+            to-[#4b250f]
+            shadow-[0_8px_18px_rgba(41,20,8,0.38),inset_0_2px_1px_rgba(255,225,180,0.28),inset_0_-3px_4px_rgba(39,18,7,0.35)]
           "
         >
 
+          {/* Wood grain */}
+
           <div
             className="
+              pointer-events-none
               absolute
-              -left-2
-              top-1/2
-              h-9
-              w-4
-              -translate-y-1/2
+              inset-x-4
+              top-[7px]
+              h-px
               rounded-full
-              bg-amber-950
-              shadow-md
+              bg-amber-200/20
+            "
+          />
+
+          <div
+            className="
+              pointer-events-none
+              absolute
+              inset-x-8
+              bottom-[6px]
+              h-px
+              rounded-full
+              bg-amber-950/35
             "
           />
 
 
+          {/* Left handle */}
+
           <div
             className="
               absolute
-              -right-2
+              -left-[14px]
               top-1/2
-              h-9
-              w-4
+              h-10
+              w-6
               -translate-y-1/2
-              rounded-full
-              bg-amber-950
-              shadow-md
             "
-          />
+          >
+
+            <div
+              className="
+                absolute
+                left-0
+                top-1/2
+                h-5
+                w-3
+                -translate-y-1/2
+                rounded-l-full
+                border
+                border-amber-950/35
+                bg-[#4b250f]
+                shadow-md
+              "
+            />
+
+            <div
+              className="
+                absolute
+                right-0
+                top-1/2
+                h-9
+                w-4
+                -translate-y-1/2
+                rounded-full
+                border
+                border-amber-950/40
+                bg-gradient-to-r
+                from-[#8f4d20]
+                via-[#5f2e13]
+                to-[#3d1d0c]
+                shadow-md
+              "
+            />
+
+            <div
+              className="
+                absolute
+                right-[5px]
+                top-1/2
+                h-2
+                w-2
+                -translate-y-1/2
+                rounded-full
+                bg-amber-200/30
+              "
+            />
+
+          </div>
+
+
+          {/* Right handle */}
+
+          <div
+            className="
+              absolute
+              -right-[14px]
+              top-1/2
+              h-10
+              w-6
+              -translate-y-1/2
+            "
+          >
+
+            <div
+              className="
+                absolute
+                right-0
+                top-1/2
+                h-5
+                w-3
+                -translate-y-1/2
+                rounded-r-full
+                border
+                border-amber-950/35
+                bg-[#4b250f]
+                shadow-md
+              "
+            />
+
+            <div
+              className="
+                absolute
+                left-0
+                top-1/2
+                h-9
+                w-4
+                -translate-y-1/2
+                rounded-full
+                border
+                border-amber-950/40
+                bg-gradient-to-l
+                from-[#8f4d20]
+                via-[#5f2e13]
+                to-[#3d1d0c]
+                shadow-md
+              "
+            />
+
+            <div
+              className="
+                absolute
+                left-[5px]
+                top-1/2
+                h-2
+                w-2
+                -translate-y-1/2
+                rounded-full
+                bg-amber-200/30
+              "
+            />
+
+          </div>
 
         </div>
 
@@ -1111,14 +1339,16 @@ function TravelPact({
             min-h-0
             flex-1
             overflow-y-auto
+            overscroll-contain
             border-x
-            border-amber-900/20
+            border-amber-900/25
             bg-[#f4e7c7]
             px-6
-            pb-8
-            pt-8
+            pb-9
+            pt-9
             text-stone-800
-            shadow-2xl
+            shadow-[0_18px_38px_rgba(38,24,12,0.30),inset_16px_0_24px_-24px_rgba(78,44,17,0.55),inset_-16px_0_24px_-24px_rgba(78,44,17,0.55)]
+            [-webkit-overflow-scrolling:touch]
           "
 
           style={{
@@ -1144,6 +1374,49 @@ function TravelPact({
               `,
           }}
         >
+
+          {/* Parchment curled side edges */}
+
+          <div
+            className="
+              pointer-events-none
+              sticky
+              top-0
+              z-[5]
+              h-0
+            "
+          >
+
+            <div
+              className="
+                absolute
+                -left-6
+                top-0
+                h-[92dvh]
+                w-5
+                bg-gradient-to-r
+                from-amber-950/10
+                via-amber-800/[0.04]
+                to-transparent
+              "
+            />
+
+            <div
+              className="
+                absolute
+                -right-6
+                top-0
+                h-[92dvh]
+                w-5
+                bg-gradient-to-l
+                from-amber-950/10
+                via-amber-800/[0.04]
+                to-transparent
+              "
+            />
+
+          </div>
+
 
           <button
             type="button"
@@ -1455,7 +1728,7 @@ function TravelPact({
               className="
                 relative
                 mt-3
-                h-[145px]
+                h-[290px]
                 overflow-hidden
                 rounded-[16px]
                 border
@@ -1626,47 +1899,146 @@ function TravelPact({
             relative
             z-20
             -mt-2
-            mx-3
-            h-7
+            mx-2
+            h-8
             rounded-full
             border
-            border-amber-950/20
+            border-amber-950/35
             bg-gradient-to-b
-            from-amber-600
-            via-amber-800
-            to-amber-950
-            shadow-xl
+            from-[#b86d2b]
+            via-[#7b3f18]
+            to-[#4b250f]
+            shadow-[0_8px_18px_rgba(41,20,8,0.38),inset_0_2px_1px_rgba(255,225,180,0.28),inset_0_-3px_4px_rgba(39,18,7,0.35)]
           "
         >
 
+          {/* Wood grain */}
+
           <div
             className="
+              pointer-events-none
               absolute
-              -left-2
-              top-1/2
-              h-9
-              w-4
-              -translate-y-1/2
+              inset-x-4
+              top-[7px]
+              h-px
               rounded-full
-              bg-amber-950
-              shadow-md
+              bg-amber-200/20
+            "
+          />
+
+          <div
+            className="
+              pointer-events-none
+              absolute
+              inset-x-8
+              bottom-[6px]
+              h-px
+              rounded-full
+              bg-amber-950/35
             "
           />
 
 
+          {/* Left handle */}
+
           <div
             className="
               absolute
-              -right-2
+              -left-[14px]
               top-1/2
-              h-9
-              w-4
+              h-10
+              w-6
               -translate-y-1/2
-              rounded-full
-              bg-amber-950
-              shadow-md
             "
-          />
+          >
+
+            <div
+              className="
+                absolute
+                left-0
+                top-1/2
+                h-5
+                w-3
+                -translate-y-1/2
+                rounded-l-full
+                border
+                border-amber-950/35
+                bg-[#4b250f]
+                shadow-md
+              "
+            />
+
+            <div
+              className="
+                absolute
+                right-0
+                top-1/2
+                h-9
+                w-4
+                -translate-y-1/2
+                rounded-full
+                border
+                border-amber-950/40
+                bg-gradient-to-r
+                from-[#8f4d20]
+                via-[#5f2e13]
+                to-[#3d1d0c]
+                shadow-md
+              "
+            />
+
+          </div>
+
+
+          {/* Right handle */}
+
+          <div
+            className="
+              absolute
+              -right-[14px]
+              top-1/2
+              h-10
+              w-6
+              -translate-y-1/2
+            "
+          >
+
+            <div
+              className="
+                absolute
+                right-0
+                top-1/2
+                h-5
+                w-3
+                -translate-y-1/2
+                rounded-r-full
+                border
+                border-amber-950/35
+                bg-[#4b250f]
+                shadow-md
+              "
+            />
+
+            <div
+              className="
+                absolute
+                left-0
+                top-1/2
+                h-9
+                w-4
+                -translate-y-1/2
+                rounded-full
+                border
+                border-amber-950/40
+                bg-gradient-to-l
+                from-[#8f4d20]
+                via-[#5f2e13]
+                to-[#3d1d0c]
+                shadow-md
+              "
+            />
+
+          </div>
 
         </div>
 
