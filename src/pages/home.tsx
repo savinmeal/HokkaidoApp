@@ -1,7 +1,8 @@
-import SnowForecastBlock from '../components/SnowForecastBlock'
+import SkiTodayCard from '../components/SkiTodayCard'
 import HomeEditPanel from '../components/HomeEditPanel'
 import PaymentMethodWallet from '../components/PaymentMethodWallet'
 import SnowPassWallet from '../components/SnowPassWallet'
+import DiveHunterCard from '../components/DiveHunterCard'
 
 import {
   useEffect,
@@ -2711,25 +2712,44 @@ function Home() {
 
 
       {/* ======================================================
-          SKI SNOW FORECAST
+          SKI TODAY · COACH BRIEF
       ====================================================== */}
 
       {homeVisibility.snowForecast && (
+        <section
+          className="mt-5"
+
+          onPointerDown={event => {
+            // 避免操作 Ski Today 時觸發 TripApp 整頁 Swipe Back
+            event.stopPropagation()
+          }}
+        >
+
+          <SkiTodayCard
+            areaId={
+              selectedRegion.id
+            }
+          />
+
+        </section>
+      )}
+
+      {/* ======================================================
+      DIVE HUNTER
+      ====================================================== */}
+
       <section
         className="mt-5"
-        onPointerDown={(event) => {
-          // 避免操作雪況 Block 時觸發 TripApp 的整頁 Swipe Back
+
+        onPointerDown={event => {
+          // 避免操作 Dive Hunter 時觸發 TripApp 整頁 Swipe Back
           event.stopPropagation()
         }}
       >
 
-        <SnowForecastBlock
-          areaId={selectedRegion.id}
-        />
+        <DiveHunterCard />
 
       </section>
-      )}
-
 
 
 

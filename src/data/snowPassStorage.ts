@@ -6,6 +6,7 @@ export type TicketType =
   | 'ski'
   | 'train'
   | 'flight'
+  | 'other'
 
 
 export type SnowPassRecord = {

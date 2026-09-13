@@ -21,14 +21,12 @@ import {
   generateTripDays,
   tripDays,
   tripInfo,
-  tripRegions,
   type ExpenseCurrency,
   type TripActivity,
   type TripActivityType,
   type TripExpense,
   type TripDay,
   type TripMeta,
-  type TripRegionId,
 } from '../data/tripData'
 
 import {
@@ -100,6 +98,54 @@ function formatDayDate(
         )
         .toUpperCase(),
   }
+}
+
+
+function shiftDateString(
+  dateString:
+    string,
+  days:
+    number
+) {
+
+  const date =
+    new Date(
+      `${dateString}T12:00:00`
+    )
+
+
+  date.setDate(
+    date.getDate() +
+    days
+  )
+
+
+  const year =
+    date.getFullYear()
+
+
+  const month =
+    String(
+      date.getMonth() + 1
+    )
+      .padStart(
+        2,
+        '0'
+      )
+
+
+  const day =
+    String(
+      date.getDate()
+    )
+      .padStart(
+        2,
+        '0'
+      )
+
+
+  return `${year}-${month}-${day}`
+
 }
 
 
@@ -509,6 +555,36 @@ function loadTripLock() {
   } catch {
     return false
   }
+}
+
+
+// ============================================================
+// Trip Page Title
+//
+// 最上方大標題獨立保存，預設維持「行程」。
+// ============================================================
+
+const TRIP_PAGE_TITLE_STORAGE_KEY =
+  'travel_v100_trip_page_title_v1'
+
+
+function loadTripPageTitle() {
+
+  try {
+
+    return (
+      localStorage.getItem(
+        TRIP_PAGE_TITLE_STORAGE_KEY
+      ) ||
+      '行程'
+    )
+
+  } catch {
+
+    return '行程'
+
+  }
+
 }
 
 
@@ -2883,6 +2959,15 @@ function Trip() {
   )
 
 
+
+  const [
+    tripPageTitle,
+    setTripPageTitle,
+  ] = useState(
+    loadTripPageTitle
+  )
+
+
   const [
     displayCurrency,
     setDisplayCurrency,
@@ -2951,6 +3036,30 @@ function Trip() {
     }
   }, [
     isLocked,
+  ])
+
+
+
+  useEffect(() => {
+
+    try {
+
+      localStorage.setItem(
+        TRIP_PAGE_TITLE_STORAGE_KEY,
+        tripPageTitle
+      )
+
+    } catch (error) {
+
+      console.error(
+        'Trip page title save failed:',
+        error
+      )
+
+    }
+
+  }, [
+    tripPageTitle,
   ])
 
 
@@ -3152,6 +3261,281 @@ function Trip() {
   ] = useState<TripMeta>({
     ...localTripMeta,
   })
+
+
+
+  // ==========================================================
+  // Long Press Title Editor
+  //
+  // 1.5 秒長按：
+  // - trip: 最上方「行程」大標題
+  // - day : 當日「行程規劃」標題
+  // ==========================================================
+
+  const [
+    titleEditorOpen,
+    setTitleEditorOpen,
+  ] = useState(false)
+
+
+  const [
+    titleEditorTarget,
+    setTitleEditorTarget,
+  ] = useState<
+    'trip' |
+    'day'
+  >(
+    'day'
+  )
+
+
+  const [
+    titleEditorValue,
+    setTitleEditorValue,
+  ] = useState('')
+
+
+  const titleLongPressTimerRef =
+    useRef<
+      number |
+      null
+    >(
+      null
+    )
+
+
+  const titleLongPressRef =
+    useRef({
+      x: 0,
+      y: 0,
+      moved: false,
+    })
+
+
+
+  const settingsLongPressTimerRef =
+    useRef<
+      number |
+      null
+    >(
+      null
+    )
+
+
+  const settingsLongPressRef =
+    useRef({
+      x: 0,
+      y: 0,
+      moved: false,
+    })
+
+
+  // ==========================================================
+  // Title Long Press
+  // ==========================================================
+
+  const clearTitleLongPress =
+    () => {
+
+      if (
+        titleLongPressTimerRef.current !==
+        null
+      ) {
+
+        window.clearTimeout(
+          titleLongPressTimerRef.current
+        )
+
+        titleLongPressTimerRef.current =
+          null
+
+      }
+
+    }
+
+
+  const startTitleLongPress = (
+    event:
+      ReactPointerEvent<HTMLElement>,
+
+    target:
+      'trip' |
+      'day'
+  ) => {
+
+    event.stopPropagation()
+
+
+    if (
+      isLocked
+    ) {
+      return
+    }
+
+
+    titleLongPressRef.current = {
+      x:
+        event.clientX,
+
+      y:
+        event.clientY,
+
+      moved:
+        false,
+    }
+
+
+    clearTitleLongPress()
+
+
+    titleLongPressTimerRef.current =
+      window.setTimeout(
+        () => {
+
+          if (
+            titleLongPressRef.current.moved
+          ) {
+            return
+          }
+
+
+          setTitleEditorTarget(
+            target
+          )
+
+
+          setTitleEditorValue(
+            target ===
+              'trip'
+              ? tripPageTitle
+              : (
+                  selectedDay.subtitle ||
+                  '行程規劃'
+                )
+          )
+
+
+          setTitleEditorOpen(
+            true
+          )
+
+
+          if (
+            typeof navigator !==
+              'undefined' &&
+            'vibrate' in
+              navigator
+          ) {
+
+            navigator.vibrate(
+              25
+            )
+
+          }
+
+        },
+        1500
+      )
+
+  }
+
+
+  const moveTitleLongPress = (
+    event:
+      ReactPointerEvent<HTMLElement>
+  ) => {
+
+    event.stopPropagation()
+
+
+    const dx =
+      event.clientX -
+      titleLongPressRef.current.x
+
+
+    const dy =
+      event.clientY -
+      titleLongPressRef.current.y
+
+
+    if (
+      Math.abs(
+        dx
+      ) > 10 ||
+      Math.abs(
+        dy
+      ) > 10
+    ) {
+
+      titleLongPressRef.current.moved =
+        true
+
+      clearTitleLongPress()
+
+    }
+
+  }
+
+
+  const finishTitleLongPress = (
+    event:
+      ReactPointerEvent<HTMLElement>
+  ) => {
+
+    event.stopPropagation()
+
+    clearTitleLongPress()
+
+  }
+
+
+  const saveTitleEditor =
+    () => {
+
+      const cleanValue =
+        titleEditorValue
+          .trim()
+
+
+      if (
+        titleEditorTarget ===
+        'trip'
+      ) {
+
+        setTripPageTitle(
+          cleanValue ||
+          '行程'
+        )
+
+      } else {
+
+        setLocalTripDays(
+          currentDays =>
+            currentDays.map(
+              (
+                day,
+                dayIndex
+              ) =>
+                dayIndex ===
+                  selectedDayIndex
+                  ? {
+                      ...day,
+
+                      subtitle:
+                        cleanValue,
+                    }
+                  : day
+            )
+        )
+
+      }
+
+
+      setTitleEditorOpen(
+        false
+      )
+
+  }
 
 
   // ==========================================================
@@ -3356,6 +3740,292 @@ function Trip() {
 
 
 
+  const extendTripDateRange = (
+    direction:
+      'previous' |
+      'next'
+  ) => {
+
+    if (
+      isLocked
+    ) {
+      return
+    }
+
+
+    const currentSelectedDate =
+      selectedDay?.date
+
+
+    const nextStartDate =
+      direction ===
+        'previous'
+        ? shiftDateString(
+            localTripMeta.startDate,
+            -1
+          )
+        : localTripMeta.startDate
+
+
+    const nextEndDate =
+      direction ===
+        'next'
+        ? shiftDateString(
+            localTripMeta.endDate,
+            1
+          )
+        : localTripMeta.endDate
+
+
+    const nextMeta:
+      TripMeta =
+    {
+      ...localTripMeta,
+
+      startDate:
+        nextStartDate,
+
+      endDate:
+        nextEndDate,
+    }
+
+
+    const nextDays =
+      generateTripDays(
+        nextStartDate,
+        nextEndDate,
+        localTripDays
+      )
+
+
+    if (
+      nextDays.length ===
+      0
+    ) {
+      return
+    }
+
+
+    setLocalTripMeta(
+      nextMeta
+    )
+
+
+    setLocalTripDays(
+      nextDays
+    )
+
+
+    const preservedIndex =
+      currentSelectedDate
+        ? nextDays.findIndex(
+            day =>
+              day.date ===
+              currentSelectedDate
+          )
+        : -1
+
+
+    const nextSelectedIndex =
+      preservedIndex >=
+        0
+        ? preservedIndex
+        : direction ===
+          'previous'
+        ? 0
+        : nextDays.length - 1
+
+
+    setSelectedDayIndex(
+      nextSelectedIndex
+    )
+
+
+    window.setTimeout(
+      () => {
+
+        const container =
+          dayTabsRef.current
+
+
+        if (
+          !container
+        ) {
+          return
+        }
+
+
+        const target =
+          direction ===
+            'previous'
+            ? container.scrollWidth * 0
+            : container.scrollWidth
+
+
+        container.scrollTo({
+          left:
+            target,
+
+          behavior:
+            'smooth',
+        })
+
+      },
+      0
+    )
+
+  }
+
+
+  const removeEdgeTripDate = (
+    direction:
+      'previous' |
+      'next'
+  ) => {
+
+    if (
+      isLocked ||
+      localTripDays.length <=
+        1
+    ) {
+      return
+    }
+
+
+    const currentSelectedDate =
+      selectedDay?.date
+
+
+    const nextStartDate =
+      direction ===
+        'previous'
+        ? shiftDateString(
+            localTripMeta.startDate,
+            1
+          )
+        : localTripMeta.startDate
+
+
+    const nextEndDate =
+      direction ===
+        'next'
+        ? shiftDateString(
+            localTripMeta.endDate,
+            -1
+          )
+        : localTripMeta.endDate
+
+
+    const nextMeta:
+      TripMeta =
+    {
+      ...localTripMeta,
+
+      startDate:
+        nextStartDate,
+
+      endDate:
+        nextEndDate,
+    }
+
+
+    const nextDays =
+      generateTripDays(
+        nextStartDate,
+        nextEndDate,
+        localTripDays
+      )
+
+
+    if (
+      nextDays.length ===
+      0
+    ) {
+      return
+    }
+
+
+    setLocalTripMeta(
+      nextMeta
+    )
+
+
+    setLocalTripDays(
+      nextDays
+    )
+
+
+    const preservedIndex =
+      currentSelectedDate
+        ? nextDays.findIndex(
+            day =>
+              day.date ===
+              currentSelectedDate
+          )
+        : -1
+
+
+    let nextSelectedIndex =
+      preservedIndex
+
+
+    if (
+      nextSelectedIndex <
+      0
+    ) {
+
+      nextSelectedIndex =
+        direction ===
+          'previous'
+          ? 0
+          : nextDays.length - 1
+
+    }
+
+
+    setSelectedDayIndex(
+      nextSelectedIndex
+    )
+
+
+    window.setTimeout(
+      () => {
+
+        const container =
+          dayTabsRef.current
+
+
+        if (
+          !container
+        ) {
+          return
+        }
+
+
+        const button =
+          container.querySelector(
+            `[data-day-index="${nextSelectedIndex}"]`
+          ) as HTMLElement | null
+
+
+        button?.scrollIntoView({
+          behavior:
+            'smooth',
+
+          inline:
+            'center',
+
+          block:
+            'nearest',
+        })
+
+      },
+      0
+    )
+
+  }
+
+
   // ==========================================================
   // Day Navigation
   // ==========================================================
@@ -3372,9 +4042,9 @@ function Trip() {
 
     const button =
       container
-        ?.children[
-          index
-        ] as HTMLElement | undefined
+        ?.querySelector(
+          `[data-day-index="${index}"]`
+        ) as HTMLElement | null
 
     if (
       container &&
@@ -3441,6 +4111,139 @@ function Trip() {
     setSettingsOpen(
       true
     )
+  }
+
+
+
+  const clearSettingsLongPress =
+    () => {
+
+      if (
+        settingsLongPressTimerRef.current !==
+        null
+      ) {
+
+        window.clearTimeout(
+          settingsLongPressTimerRef.current
+        )
+
+        settingsLongPressTimerRef.current =
+          null
+
+      }
+
+    }
+
+
+  const startSettingsLongPress = (
+    event:
+      ReactPointerEvent<HTMLElement>
+  ) => {
+
+    event.stopPropagation()
+
+
+    if (
+      isLocked
+    ) {
+      return
+    }
+
+
+    settingsLongPressRef.current = {
+      x:
+        event.clientX,
+
+      y:
+        event.clientY,
+
+      moved:
+        false,
+    }
+
+
+    clearSettingsLongPress()
+
+
+    settingsLongPressTimerRef.current =
+      window.setTimeout(
+        () => {
+
+          if (
+            settingsLongPressRef.current.moved
+          ) {
+            return
+          }
+
+
+          openTripSettings()
+
+
+          if (
+            typeof navigator !==
+              'undefined' &&
+            'vibrate' in navigator
+          ) {
+
+            navigator.vibrate(
+              25
+            )
+
+          }
+
+        },
+        1500
+      )
+
+  }
+
+
+  const moveSettingsLongPress = (
+    event:
+      ReactPointerEvent<HTMLElement>
+  ) => {
+
+    event.stopPropagation()
+
+
+    const dx =
+      event.clientX -
+      settingsLongPressRef.current.x
+
+
+    const dy =
+      event.clientY -
+      settingsLongPressRef.current.y
+
+
+    if (
+      Math.abs(
+        dx
+      ) > 10 ||
+      Math.abs(
+        dy
+      ) > 10
+    ) {
+
+      settingsLongPressRef.current.moved =
+        true
+
+      clearSettingsLongPress()
+
+    }
+
+  }
+
+
+  const finishSettingsLongPress = (
+    event:
+      ReactPointerEvent<HTMLElement>
+  ) => {
+
+    event.stopPropagation()
+
+    clearSettingsLongPress()
+
   }
 
 
@@ -3534,77 +4337,6 @@ function Trip() {
     setIsLocked(
       current =>
         !current
-    )
-  }
-
-
-  // ==========================================================
-  // Day Region
-  // ==========================================================
-
-  const updateSelectedDayRegion = (
-    regionId: TripRegionId
-  ) => {
-    if (isLocked) {
-      return
-    }
-
-    const region =
-      tripRegions.find(
-        item =>
-          item.id ===
-          regionId
-      )
-
-    if (!region) {
-      return
-    }
-
-    setLocalTripDays(
-      currentDays =>
-        currentDays.map(
-          (
-            day,
-            dayIndex
-          ) =>
-            dayIndex ===
-            selectedDayIndex
-              ? {
-                  ...day,
-                  regionId:
-                    region.id,
-                  city:
-                    region.name,
-                }
-              : day
-        )
-    )
-  }
-
-
-  const clearSelectedDayRegion = () => {
-    if (isLocked) {
-      return
-    }
-
-    setLocalTripDays(
-      currentDays =>
-        currentDays.map(
-          (
-            day,
-            dayIndex
-          ) =>
-            dayIndex ===
-            selectedDayIndex
-              ? {
-                  ...day,
-                  regionId:
-                    undefined,
-                  city:
-                    '',
-                }
-              : day
-        )
     )
   }
 
@@ -4108,14 +4840,7 @@ function Trip() {
           Header
       ====================================================== */}
       <section className="px-1">
-        <div
-          className="
-            flex
-            items-center
-            justify-between
-            gap-4
-          "
-        >
+        <div>
           <p
             className="
               min-w-0
@@ -4128,31 +4853,6 @@ function Trip() {
           >
             {localTripMeta.headerLabel}
           </p>
-
-          <button
-            type="button"
-            disabled={isLocked}
-            onClick={openTripSettings}
-            className="
-              shrink-0
-              rounded-full
-              border
-              border-slate-300/70
-              bg-white/45
-              px-3
-              py-1.5
-              text-[9px]
-              font-semibold
-              tracking-[0.14em]
-              text-slate-600
-              backdrop-blur-xl
-              transition
-              enabled:active:scale-95
-              disabled:opacity-30
-            "
-          >
-            EDIT
-          </button>
         </div>
 
 
@@ -4166,25 +4866,105 @@ function Trip() {
           "
         >
           <div>
-            <h1
+            <button
+              type="button"
+
+              disabled={
+                isLocked
+              }
+
+              onPointerDown={
+                event =>
+                  startTitleLongPress(
+                    event,
+                    'trip'
+                  )
+              }
+
+              onPointerMove={
+                moveTitleLongPress
+              }
+
+              onPointerUp={
+                finishTitleLongPress
+              }
+
+              onPointerCancel={
+                finishTitleLongPress
+              }
+
+              onContextMenu={
+                event =>
+                  event.preventDefault()
+              }
+
               className="
-                text-[32px]
-                font-semibold
-                leading-none
-                tracking-[-0.04em]
-                text-slate-950
+                block
+                touch-manipulation
+                select-none
+                text-left
+                disabled:cursor-default
               "
             >
-              行程
-            </h1>
+              <h1
+                className="
+                  text-[32px]
+                  font-semibold
+                  leading-none
+                  tracking-[-0.04em]
+                  text-slate-950
+                "
+              >
+                {
+                  tripPageTitle ||
+                  '行程'
+                }
+              </h1>
+            </button>
 
-            <p
+            <button
+              type="button"
+
+              disabled={
+                isLocked
+              }
+
+              onPointerDown={
+                startSettingsLongPress
+              }
+
+              onPointerMove={
+                moveSettingsLongPress
+              }
+
+              onPointerUp={
+                finishSettingsLongPress
+              }
+
+              onPointerCancel={
+                finishSettingsLongPress
+              }
+
+              onContextMenu={
+                event =>
+                  event.preventDefault()
+              }
+
+              aria-label="長按 1.5 秒修改旅行日期"
+
               className="
                 mt-3
+                block
+                touch-manipulation
+                select-none
+                text-left
                 text-[12px]
                 font-medium
                 tracking-[0.08em]
                 text-slate-500
+                transition
+                active:text-slate-700
+                disabled:cursor-default
               "
             >
               {formatShortDate(
@@ -4198,7 +4978,7 @@ function Trip() {
               {formatShortDate(
                 localTripMeta.endDate
               )}
-            </p>
+            </button>
           </div>
 
 
@@ -4282,6 +5062,17 @@ function Trip() {
 
       {/* ======================================================
           Day Selector
+
+          Tap:
+          - Select a day
+          - Left / right top ＋ extends the date range by one day
+          - Left / right bottom − removes the nearest edge day
+
+          Long press 1.5 sec:
+          - Open Trip date settings
+
+          Drag:
+          - Horizontal scroll
       ====================================================== */}
       <section
         className="
@@ -4295,19 +5086,59 @@ function Trip() {
           data-horizontal-scroll="true"
 
           onPointerDown={
-            handleDayPointerDown
+            event => {
+
+              handleDayPointerDown(
+                event
+              )
+
+              startSettingsLongPress(
+                event
+              )
+
+            }
           }
 
           onPointerMove={
-            handleDayPointerMove
+            event => {
+
+              handleDayPointerMove(
+                event
+              )
+
+              moveSettingsLongPress(
+                event
+              )
+
+            }
           }
 
           onPointerUp={
-            finishDayPointerDrag
+            event => {
+
+              finishDayPointerDrag(
+                event
+              )
+
+              finishSettingsLongPress(
+                event
+              )
+
+            }
           }
 
           onPointerCancel={
-            finishDayPointerDrag
+            event => {
+
+              finishDayPointerDrag(
+                event
+              )
+
+              finishSettingsLongPress(
+                event
+              )
+
+            }
           }
 
           onWheel={
@@ -4340,6 +5171,115 @@ function Trip() {
               'touch',
           }}
         >
+
+          <div
+            className="
+              flex
+              min-w-[64px]
+              shrink-0
+              flex-col
+              overflow-hidden
+              rounded-[20px]
+              border
+              border-dashed
+              border-slate-300/80
+              bg-white/35
+              text-slate-500
+              backdrop-blur-xl
+            "
+          >
+
+            <button
+              type="button"
+
+              disabled={
+                isLocked
+              }
+
+              onClick={() => {
+
+                if (
+                  dayDragRef.current.moved
+                ) {
+                  return
+                }
+
+
+                extendTripDateRange(
+                  'previous'
+                )
+
+              }}
+
+              aria-label="往前增加一天"
+
+              className="
+                flex
+                min-h-[43px]
+                flex-1
+                items-center
+                justify-center
+                border-b
+                border-slate-200/70
+                text-[22px]
+                font-light
+                leading-none
+                transition
+                active:bg-white/55
+                disabled:opacity-30
+              "
+            >
+              ＋
+            </button>
+
+
+            <button
+              type="button"
+
+              disabled={
+                isLocked ||
+                localTripDays.length <=
+                  1
+              }
+
+              onClick={() => {
+
+                if (
+                  dayDragRef.current.moved
+                ) {
+                  return
+                }
+
+
+                removeEdgeTripDate(
+                  'previous'
+                )
+
+              }}
+
+              aria-label="刪除最前一天"
+
+              className="
+                flex
+                min-h-[43px]
+                flex-1
+                items-center
+                justify-center
+                text-[23px]
+                font-light
+                leading-none
+                text-slate-400
+                transition
+                active:bg-white/55
+                disabled:opacity-20
+              "
+            >
+              −
+            </button>
+
+          </div>
+
+
           {localTripDays.map(
             (
               day,
@@ -4358,6 +5298,10 @@ function Trip() {
                 <button
                   key={day.id}
                   type="button"
+
+                  data-day-index={
+                    index
+                  }
                   onClick={() => {
 
                     if (
@@ -4448,6 +5392,115 @@ function Trip() {
               )
             }
           )}
+
+
+          <div
+            className="
+              flex
+              min-w-[64px]
+              shrink-0
+              flex-col
+              overflow-hidden
+              rounded-[20px]
+              border
+              border-dashed
+              border-slate-300/80
+              bg-white/35
+              text-slate-500
+              backdrop-blur-xl
+            "
+          >
+
+            <button
+              type="button"
+
+              disabled={
+                isLocked
+              }
+
+              onClick={() => {
+
+                if (
+                  dayDragRef.current.moved
+                ) {
+                  return
+                }
+
+
+                extendTripDateRange(
+                  'next'
+                )
+
+              }}
+
+              aria-label="往後增加一天"
+
+              className="
+                flex
+                min-h-[43px]
+                flex-1
+                items-center
+                justify-center
+                border-b
+                border-slate-200/70
+                text-[22px]
+                font-light
+                leading-none
+                transition
+                active:bg-white/55
+                disabled:opacity-30
+              "
+            >
+              ＋
+            </button>
+
+
+            <button
+              type="button"
+
+              disabled={
+                isLocked ||
+                localTripDays.length <=
+                  1
+              }
+
+              onClick={() => {
+
+                if (
+                  dayDragRef.current.moved
+                ) {
+                  return
+                }
+
+
+                removeEdgeTripDate(
+                  'next'
+                )
+
+              }}
+
+              aria-label="刪除最後一天"
+
+              className="
+                flex
+                min-h-[43px]
+                flex-1
+                items-center
+                justify-center
+                text-[23px]
+                font-light
+                leading-none
+                text-slate-400
+                transition
+                active:bg-white/55
+                disabled:opacity-20
+              "
+            >
+              −
+            </button>
+
+          </div>
+
         </div>
       </section>
 
@@ -4497,20 +5550,61 @@ function Trip() {
                   }
                 </p>
 
-                <h2
+                <button
+                  type="button"
+
+                  disabled={
+                    isLocked
+                  }
+
+                  onPointerDown={
+                    event =>
+                      startTitleLongPress(
+                        event,
+                        'day'
+                      )
+                  }
+
+                  onPointerMove={
+                    moveTitleLongPress
+                  }
+
+                  onPointerUp={
+                    finishTitleLongPress
+                  }
+
+                  onPointerCancel={
+                    finishTitleLongPress
+                  }
+
+                  onContextMenu={
+                    event =>
+                      event.preventDefault()
+                  }
+
                   className="
                     mt-2
-                    text-[22px]
-                    font-semibold
-                    tracking-[-0.025em]
-                    text-slate-950
+                    block
+                    touch-manipulation
+                    select-none
+                    text-left
+                    disabled:cursor-default
                   "
                 >
-                  {
-                    selectedDay.city ||
-                    '行程規劃'
-                  }
-                </h2>
+                  <h2
+                    className="
+                      text-[22px]
+                      font-semibold
+                      tracking-[-0.025em]
+                      text-slate-950
+                    "
+                  >
+                    {
+                      selectedDay.subtitle ||
+                      '行程規劃'
+                    }
+                  </h2>
+                </button>
 
                 <p
                   className="
@@ -4566,148 +5660,6 @@ function Trip() {
                     selectedDateInfo.weekday
                   }
                 </p>
-              </div>
-            </div>
-
-
-            {/* Day Region */}
-            <div
-              className="
-                mt-5
-                border-t
-                border-slate-200/70
-                pt-4
-              "
-            >
-              <div
-                className="
-                  flex
-                  items-center
-                  justify-between
-                  gap-3
-                "
-              >
-                <div>
-                  <p
-                    className="
-                      text-[9px]
-                      font-semibold
-                      tracking-[0.16em]
-                      text-slate-500
-                    "
-                  >
-                    DAY AREA
-                  </p>
-
-                  <p
-                    className="
-                      mt-1
-                      text-[11px]
-                      text-slate-500
-                    "
-                  >
-                    設定這一天主要所在城市
-                  </p>
-                </div>
-
-                {
-                  selectedDay.regionId &&
-                  !isLocked && (
-                    <button
-                      type="button"
-                      onClick={
-                        clearSelectedDayRegion
-                      }
-                      className="
-                        shrink-0
-                        text-[10px]
-                        font-medium
-                        text-slate-500
-                        transition
-                        active:opacity-50
-                      "
-                    >
-                      清除
-                    </button>
-                  )
-                }
-              </div>
-
-
-              <div
-                data-horizontal-scroll="true"
-
-                onPointerDown={(
-                  event
-                ) => {
-                  event.stopPropagation()
-                }}
-
-                className="
-                  -mx-1
-                  mt-3
-                  flex
-                  gap-2
-                  overflow-x-auto
-                  px-1
-                  pb-1
-                  [scrollbar-width:none]
-                  [&::-webkit-scrollbar]:hidden
-                "
-              >
-                {tripRegions.map(
-                  region => {
-                    const selected =
-                      selectedDay.regionId ===
-                      region.id
-
-                    return (
-                      <button
-                        key={region.id}
-                        type="button"
-                        disabled={isLocked}
-                        onClick={() =>
-                          updateSelectedDayRegion(
-                            region.id
-                          )
-                        }
-                        className={`
-                          shrink-0
-                          rounded-full
-                          border
-                          px-3
-                          py-2
-                          text-[11px]
-                          font-medium
-                          transition-all
-                          duration-200
-                          enabled:active:scale-[0.96]
-                          disabled:cursor-default
-                          ${
-                            selected
-                              ? `
-                                  border-slate-900
-                                  bg-slate-950
-                                  text-white
-                                `
-                              : `
-                                  border-slate-200/90
-                                  bg-white/60
-                                  text-slate-600
-                                `
-                          }
-                          ${
-                            isLocked
-                              ? 'opacity-55'
-                              : ''
-                          }
-                        `}
-                      >
-                        {region.name}
-                      </button>
-                    )
-                  }
-                )}
               </div>
             </div>
 
@@ -5459,6 +6411,157 @@ function Trip() {
           closeExpenseBook
         }
       />
+
+
+      <BottomSheet
+        open={
+          titleEditorOpen
+        }
+
+        onClose={() =>
+          setTitleEditorOpen(
+            false
+          )
+        }
+      >
+
+        <div
+          className="
+            mt-5
+          "
+        >
+
+          <p
+            className="
+              text-[9px]
+              font-semibold
+              tracking-[0.18em]
+              text-slate-500
+            "
+          >
+            {
+              titleEditorTarget ===
+                'trip'
+                ? 'TRIP TITLE'
+                : `DAY ${selectedDay.dayNumber}`
+            }
+          </p>
+
+
+          <h2
+            className="
+              mt-1
+              text-[24px]
+              font-semibold
+              tracking-[-0.03em]
+              text-slate-950
+            "
+          >
+            修改標題
+          </h2>
+
+
+          <input
+            autoFocus
+            type="text"
+
+            value={
+              titleEditorValue
+            }
+
+            onChange={
+              event =>
+                setTitleEditorValue(
+                  event.target.value
+                )
+            }
+
+            onKeyDown={
+              event => {
+
+                if (
+                  event.key ===
+                  'Enter'
+                ) {
+
+                  saveTitleEditor()
+
+                }
+
+              }
+            }
+
+            placeholder={
+              titleEditorTarget ===
+                'trip'
+                ? '例如：行程'
+                : '例如：富良野滑雪日'
+            }
+
+            className="
+              mt-6
+              w-full
+              rounded-[18px]
+              border
+              border-slate-200
+              bg-white
+              px-4
+              py-3.5
+              text-[16px]
+              font-medium
+              text-slate-950
+              outline-none
+              transition
+              placeholder:text-slate-400
+              focus:border-slate-400
+            "
+          />
+
+
+          <p
+            className="
+              mt-3
+              text-[10px]
+              leading-5
+              text-slate-500
+            "
+          >
+            {
+              titleEditorTarget ===
+                'trip'
+                ? '這個名稱會顯示在 Trip 頁最上方的大標題。'
+                : '這個名稱只會套用到目前選擇的這一天。'
+            }
+          </p>
+
+
+          <button
+            type="button"
+
+            onClick={
+              saveTitleEditor
+            }
+
+            className="
+              mt-6
+              w-full
+              rounded-[18px]
+              bg-slate-950
+              px-4
+              py-4
+              text-[14px]
+              font-semibold
+              text-white
+              transition
+              active:scale-[0.99]
+            "
+          >
+            儲存
+          </button>
+
+        </div>
+
+      </BottomSheet>
 
 
       <TripSettingsSheet

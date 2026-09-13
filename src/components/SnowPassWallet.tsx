@@ -1487,6 +1487,488 @@ function FlightTicketSlide({
 }
 
 
+
+// ============================================================
+// Other Ticket
+// Vintage Taiwan Rail hard ticket inspired styling.
+// ============================================================
+
+function OtherTicketSlide({
+  record,
+  onOpenImage,
+}: {
+  record:
+    SnowPassRecord
+
+  onOpenImage:
+    (
+      url:
+        string,
+      name:
+        string
+    ) => void
+}) {
+
+  const serial =
+    getSerial(
+      record
+    )
+
+
+  return (
+
+    <div
+      className="
+        relative
+        mx-auto
+        h-[302px]
+        w-[calc(100%-6px)]
+        max-w-[345px]
+        overflow-hidden
+        rounded-[3px]
+        border
+        border-[#587054]
+        bg-[#d9e0aa]
+        text-[#21361f]
+        shadow-[0_12px_24px_rgba(57,78,46,0.16)]
+      "
+      style={{
+        backgroundImage:
+          `
+            repeating-linear-gradient(
+              90deg,
+              rgba(64,92,59,0.04) 0px,
+              rgba(64,92,59,0.04) 1px,
+              transparent 1px,
+              transparent 6px
+            ),
+            repeating-linear-gradient(
+              0deg,
+              rgba(255,255,255,0.04) 0px,
+              rgba(255,255,255,0.04) 1px,
+              transparent 1px,
+              transparent 5px
+            ),
+            linear-gradient(
+              180deg,
+              rgba(255,255,255,0.18) 0%,
+              rgba(255,255,255,0) 16%
+            )
+          `,
+      }}
+    >
+
+      <div
+        className="
+          absolute
+          inset-x-0
+          top-0
+          h-[44px]
+          border-b-2
+          border-[#51684b]/55
+          bg-[#6a865f]
+          text-[#f8f6e8]
+        "
+      >
+
+        <div
+          className="
+            absolute
+            left-4
+            top-[7px]
+          "
+        >
+
+          <p
+            className="
+              text-[7px]
+              font-black
+              tracking-[0.26em]
+              text-white/80
+            "
+          >
+            TRAVEL TICKET
+          </p>
+
+          <p
+            className="
+              mt-[2px]
+              text-[13px]
+              font-black
+              tracking-[0.18em]
+            "
+          >
+            復古旅遊硬票
+          </p>
+
+        </div>
+
+
+        <div
+          className="
+            pointer-events-none
+            absolute
+            left-1/2
+            top-[5px]
+            -translate-x-1/2
+            select-none
+          "
+          aria-hidden="true"
+        >
+
+          <div
+            className="
+              flex
+              h-[32px]
+              w-[42px]
+              items-center
+              justify-center
+              rounded-[5px]
+              border
+              border-white/55
+              bg-white/[0.06]
+              shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]
+            "
+          >
+
+            <svg
+              viewBox="0 0 60 44"
+              className="
+                h-[24px]
+                w-[34px]
+                text-white/82
+              "
+              fill="none"
+            >
+
+              <path
+                d="
+                  M7 11
+                  H53
+                  M7 33
+                  H53
+                "
+                stroke="currentColor"
+                strokeWidth="3.2"
+                strokeLinecap="round"
+              />
+
+              <path
+                d="
+                  M14 10
+                  V34
+                  M46 10
+                  V34
+                "
+                stroke="currentColor"
+                strokeWidth="3.2"
+                strokeLinecap="round"
+              />
+
+              <path
+                d="
+                  M20 14
+                  H40
+                  V30
+                  H20
+                  Z
+                "
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinejoin="round"
+              />
+
+              <path
+                d="
+                  M24 18
+                  H36
+                  M24 26
+                  H36
+                "
+                stroke="currentColor"
+                strokeWidth="2.6"
+                strokeLinecap="round"
+              />
+
+            </svg>
+
+          </div>
+
+        </div>
+
+
+        <div
+          className="
+            absolute
+            right-4
+            top-[8px]
+            text-right
+          "
+        >
+
+          <p
+            className="
+              text-[6px]
+              font-bold
+              tracking-[0.14em]
+              text-white/65
+            "
+          >
+            TYPE
+          </p>
+
+          <p
+            className="
+              mt-[1px]
+              text-[11px]
+              font-black
+              tracking-[0.12em]
+            "
+          >
+            OTHER
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <div
+        className="
+          absolute
+          left-0
+          top-[44px]
+          h-[13px]
+          w-full
+          border-b
+          border-dashed
+          border-[#78916f]/85
+          bg-[#ced89f]
+        "
+      />
+
+
+      <div
+        className="
+          pointer-events-none
+          absolute
+          left-1/2
+          top-[63px]
+          -translate-x-1/2
+          whitespace-nowrap
+          text-[18px]
+          font-black
+          tracking-[0.08em]
+          text-[#4e774e]/14
+          select-none
+        "
+      >
+        十分 → 幸福
+      </div>
+
+
+      <div
+        className="
+          absolute
+          inset-x-0
+          bottom-0
+          top-[57px]
+          px-4
+          pb-3
+          pt-4
+        "
+      >
+
+        <div
+          className="
+            flex
+            items-start
+            justify-between
+            gap-2
+          "
+        >
+
+          <div className="min-w-0">
+
+            <p
+              className="
+                text-[8px]
+                font-bold
+                tracking-[0.13em]
+                text-[#577053]
+              "
+            >
+              區間 / 名稱
+            </p>
+
+            <p
+              className="
+                mt-[2px]
+                max-w-[230px]
+                truncate
+                text-[15px]
+                font-black
+                tracking-[0.06em]
+                text-[#19301c]
+              "
+            >
+              {
+                record.name ||
+                '十分 → 幸福'
+              }
+            </p>
+
+          </div>
+
+
+          <div
+            className="
+              shrink-0
+              rounded-[3px]
+              border
+              border-[#5f7858]/45
+              bg-[#ebf0d0]/80
+              px-2
+              py-1
+              text-center
+              shadow-[inset_0_1px_0_rgba(255,255,255,0.4)]
+            "
+          >
+
+            <p
+              className="
+                text-[6px]
+                font-bold
+                tracking-[0.1em]
+                text-[#607560]
+              "
+            >
+              票號
+            </p>
+
+            <p
+              className="
+                mt-[1px]
+                font-mono
+                text-[8px]
+                font-black
+                tracking-[0.12em]
+                text-[#1a351f]
+              "
+            >
+              {serial}
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div
+          className="
+            relative
+            mt-[8px]
+            overflow-hidden
+            rounded-[3px]
+            border
+            border-[#839975]/60
+            bg-[#eef3d7]
+            p-[6px]
+            shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]
+          "
+        >
+
+          <TicketPhoto
+            record={
+              record
+            }
+
+            onOpenImage={
+              onOpenImage
+            }
+
+            heightClass="h-[176px]"
+
+            frameClass="
+              rounded-[2px]
+              border
+              border-[#9caf91]/55
+              bg-[#fcfff7]
+              p-[4px]
+            "
+          />
+
+
+          <div
+            className="
+              pointer-events-none
+              absolute
+              right-[8px]
+              top-[8px]
+              rounded-[3px]
+              border
+              border-[#6b825f]/35
+              bg-[#e9efcf]/88
+              px-2
+              py-[2px]
+              text-[8px]
+              font-black
+              tracking-[0.14em]
+              text-[#436446]/75
+            "
+          >
+            硬票
+          </div>
+
+        </div>
+
+
+        <div
+          className="
+            relative
+            mt-[7px]
+            overflow-hidden
+            rounded-[8px]
+            border
+            border-[#7a926c]/30
+            bg-[#e7eed0]/82
+            px-3
+            py-2
+          "
+        >
+
+          <div
+            className="
+              flex
+              items-center
+              justify-between
+              text-[7px]
+              font-semibold
+              text-[#52674e]
+            "
+          >
+
+            <span>
+              VINTAGE RAIL STYLE
+            </span>
+
+            <span>
+              COLLECTIBLE PASS
+            </span>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  )
+
+}
+
+
 // ============================================================
 // Ticket Slide Router
 // ============================================================
@@ -1540,6 +2022,26 @@ function SnowPassSlide({
 
     return (
       <FlightTicketSlide
+        record={
+          record
+        }
+
+        onOpenImage={
+          onOpenImage
+        }
+      />
+    )
+
+  }
+
+
+  if (
+    ticketType ===
+    'other'
+  ) {
+
+    return (
+      <OtherTicketSlide
         record={
           record
         }
@@ -2118,7 +2620,7 @@ function SnowPassEditor({
             className="
               mt-2
               grid
-              grid-cols-3
+              grid-cols-4
               gap-2
             "
           >
@@ -2163,6 +2665,19 @@ function SnowPassEditor({
 
                   icon:
                     '✈',
+                },
+                {
+                  id:
+                    'other',
+
+                  label:
+                    '其他',
+
+                  sub:
+                    '票券',
+
+                  icon:
+                    '🎫',
                 },
               ] as const
             ).map(
@@ -2293,6 +2808,9 @@ function SnowPassEditor({
                 : ticketType ===
                   'flight'
                 ? '例如：TPE → CTS / BR116'
+                : ticketType ===
+                  'other'
+                ? '例如：十分 → 幸福 / 旅遊紀念票'
                 : '例如：FURANO / NISEKO'
             }
             onChange={event =>
@@ -2354,6 +2872,9 @@ function SnowPassEditor({
                 : ticketType ===
                   'flight'
                 ? '選擇機票 / Boarding Pass 圖片'
+                : ticketType ===
+                  'other'
+                ? '選擇其他票券圖片'
                 : '選擇雪票照片'
             }
           </button>
@@ -3163,25 +3684,28 @@ function SnowPassWallet() {
               openCreate
             }
 
+            aria-label="新增票券"
+
             className="
               flex
-              h-[34px]
+              h-[38px]
+              w-[38px]
               items-center
-              gap-1
+              justify-center
+              rounded-full
               border
               border-[#8b836d]
               bg-[#f8f3df]
-              px-[11px]
-              text-[8px]
-              font-black
-              tracking-[0.08em]
+              text-[22px]
+              font-light
+              leading-none
               text-[#4d4c43]
               shadow-[2px_2px_0_rgba(94,82,56,0.10)]
               transition
               active:translate-y-px
             "
           >
-            ＋ 追加
+            ＋
           </button>
 
         </div>
@@ -3293,7 +3817,7 @@ function SnowPassWallet() {
                   text-[#777160]
                 "
               >
-                加入雪票 / JR 車票 / 機票
+                加入雪票 / JR 車票 / 機票 / 其他
               </p>
 
 
